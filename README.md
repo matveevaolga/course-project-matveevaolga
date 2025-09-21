@@ -51,3 +51,5 @@ docker compose up --build
 ```
 
 См. также: `SECURITY.md`, `.pre-commit-config.yaml`, `.github/workflows/ci.yml`.
+
+Обновлено в p01-setup

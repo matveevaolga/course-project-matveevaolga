@@ -50,4 +50,6 @@ docker compose up --build
 }
 ```
 
-См. также: `SECURITY.md`, `.pre-commit-config.yaml`, `.github/workflows/ci.yml`.
+См. также: `SECURITY.md`, `.pre-commit-config.yaml`, `.github/workflows/ci.yml`. 
+
+обновлено в p01-setup

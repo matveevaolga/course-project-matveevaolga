@@ -56,7 +56,6 @@ class FeatureStore:
             "user_id": user_id,
         }
 
-        # Update vote count
         if feat_id in self.features:
             self.features[feat_id]["votes_count"] += value
 
@@ -66,6 +65,20 @@ class FeatureStore:
     def get_top(self) -> list:
         feats = list(self.features.values())
         return sorted(feats, key=lambda x: x["votes_count"], reverse=True)
+
+    def get_all_features(self) -> list:
+        return list(self.features.values())
+
+    def get_all_votes(self) -> list:
+        return list(self.votes.values())
+
+    def reset_for_tests(self):
+        self.features.clear()
+        self.votes.clear()
+        self.feature_votes.clear()
+        self.user_votes.clear()
+        self._feat_cnt = 1
+        self._vote_cnt = 1
 
 
 feat_store = FeatureStore()

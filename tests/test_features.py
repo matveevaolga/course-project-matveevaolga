@@ -1,5 +1,6 @@
 from fastapi.testclient import TestClient
 
+from app.features.store import feat_store
 from app.main import app
 
 client = TestClient(app)
@@ -43,3 +44,38 @@ def test_feature_votes_workflow():
     top_resp = client.get("/features/top")
     assert top_resp.status_code == 200
     assert len(top_resp.json()) > 0
+
+
+def test_features_stats_empty():
+    feat_store.reset_for_tests()
+
+    response = client.get("/features/stats")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total_features"] == 0
+    assert data["total_votes"] == 0
+    assert data["total_vote_value"] == 0
+    assert data["avg_votes_per_feature"] == 0
+    assert data["most_voted_feature"] is None
+
+
+def test_features_stats_with_data():
+    feat_store.reset_for_tests()
+
+    client.post("/features/", json={"title": "Feature 1", "desc": "Test feature 1"})
+    client.post("/features/", json={"title": "Feature 2", "desc": "Test feature 2"})
+
+    client.post("/features/1/vote", json={"value": 1})
+    client.post("/features/1/vote", json={"value": 1})
+    client.post("/features/2/vote", json={"value": -1})
+
+    response = client.get("/features/stats")
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["total_features"] == 2
+    assert data["total_votes"] == 3
+    assert data["total_vote_value"] == 1
+    assert data["avg_votes_per_feature"] == 1.5
+    assert data["most_voted_feature"]["id"] == 1
+    assert data["most_voted_feature"]["votes_count"] == 2

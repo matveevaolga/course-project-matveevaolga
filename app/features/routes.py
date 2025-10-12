@@ -17,6 +17,35 @@ def get_all():
     return feat_store.get_all()
 
 
+@router.get("/stats")
+def get_stats():
+    features = feat_store.get_all_features()
+    votes = feat_store.get_all_votes()
+
+    total_features = len(features)
+    total_votes = len(votes)
+
+    avg_votes_per_feature = total_votes / total_features if total_features > 0 else 0
+    total_vote_value = sum(vote["value"] for vote in votes)
+
+    most_voted = None
+    if features:
+        most_voted_feature = max(features, key=lambda x: x["votes_count"])
+        most_voted = {
+            "id": most_voted_feature["id"],
+            "title": most_voted_feature["title"],
+            "votes_count": most_voted_feature["votes_count"],
+        }
+
+    return {
+        "total_features": total_features,
+        "total_votes": total_votes,
+        "total_vote_value": total_vote_value,
+        "avg_votes_per_feature": round(avg_votes_per_feature, 2),
+        "most_voted_feature": most_voted,
+    }
+
+
 @router.get("/top", response_model=list[FeatureResp])
 def get_top():
     return feat_store.get_top()

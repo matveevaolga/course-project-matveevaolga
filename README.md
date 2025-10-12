@@ -1,6 +1,7 @@
-# SecDev Course Template
+# Feature Votes API
 
-Стартовый шаблон для студенческого репозитория (HSE SecDev 2025).
+Система голосования за фичи проекта. Пользователи могут предлагать свои и голосовать за уже предложенные фичи.
+
 
 ## Быстрый старт
 ```bash
@@ -31,25 +32,58 @@ Badge добавится автоматически после загрузки 
 
 ## Контейнеры
 ```bash
-docker build -t secdev-app .
-docker run --rm -p 8000:8000 secdev-app
+docker build -t feature-votes .
+docker run --rm -p 8000:8000 feature-votes
 # или
 docker compose up --build
 ```
 
 ## Эндпойнты
+### default
 - `GET /health` → `{"status": "ok"}`
 - `POST /items?name=...` — демо-сущность
 - `GET /items/{id}`
+### features
+- `GET /features` - список всех фич
+- `POST /features` - создать фичу
+- `GET /features/{id}` - получить фичу по id
+- `PUT /features/{id}` - обновить фичу по id
+- `DELETE /features/{id}` - удалить фичу по id
+- `POST /features/{id}/vote` - проголосовать за фичу по id
+- `GET /features/top` - топ фич по числу голосов
+
+## Примеры использования
+
+### Получить список всех фич
+curl -X GET "http://localhost:8000/features/"
+### Создать фичу
+curl -X POST "http://localhost:8000/features/" \
+  -H "Content-Type: application/json" \
+  -d '{"title":"feature title","desc":"feature desc"}'
+### Получить фичу по id
+curl -X GET "http://localhost:8000/features/1"
+### Обновить фичу по id
+curl -X PUT "http://localhost:8000/features/1" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "new title",
+    "desc": "new desc"
+  }'
+### Удалить фичу по id
+curl -X DELETE "http://localhost:8000/features/1"
+### Получить топ фич по числу голосов
+curl -X GET "http://localhost:8000/features/top"
+### Проголосовать за фичу по id
+curl -X POST "http://localhost:8000/features/1/vote" \
+  -H "Content-Type: application/json" \
+  -d '{"value":1}'
 
 ## Формат ошибок
 Все ошибки — JSON-обёртка:
 ```json
 {
-  "error": {"code": "not_found", "message": "item not found"}
+  "error": {"code": "not_found", "msg": "feature not found"}
 }
 ```
 
 См. также: `SECURITY.md`, `.pre-commit-config.yaml`, `.github/workflows/ci.yml`.
-
-Обновлено в p01-setup

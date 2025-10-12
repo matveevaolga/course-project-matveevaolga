@@ -6,7 +6,7 @@ client = TestClient(app)
 
 
 def test_not_found_item():
-    r = client.get("/items/989")
+    r = client.get("/items/999")
     assert r.status_code == 404
     body = r.json()
     assert "error" in body and body["error"]["code"] == "not_found"

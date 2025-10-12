@@ -1,10 +1,13 @@
 name: CI
+
 on:
   pull_request:
   push:
     branches: [main]
+
 permissions:
   contents: read
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -12,6 +15,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
@@ -25,14 +29,53 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt -r requirements-dev.txt
 
-      - name: Lint & Format
-        run: |
-          ruff check --output-format=github .
-          black --check .
-          isort --check-only .
+      - name: Lint with ruff
+        run: ruff check --output-format=github .
 
-      - name: Tests
+      - name: Format with black
+        run: black --check .
+
+      - name: Check imports with isort
+        run: isort --check-only .
+
+      - name: Run tests
         run: pytest -q
+
+      - name: Domain smoke test
+        run: |
+          python -c "
+          from app.main import app
+          from fastapi.testclient import TestClient
+          client = TestClient(app)
+
+          # Проверка здоровья приложения
+          resp = client.get('/health')
+          assert resp.status_code == 200
+          assert resp.json() == {'status': 'ok'}
+          print('Health check passed')
+
+          # Проверка получения фич
+          resp = client.get('/features/')
+          assert resp.status_code == 200
+          assert isinstance(resp.json(), list)
+          print('Features endpoint working')
+
+          # Проверка топ фич
+          resp = client.get('/features/top')
+          assert resp.status_code == 200
+          assert isinstance(resp.json(), list)
+          print('Top features endpoint working')
+
+          # Создание тестовой фичи
+          resp = client.post('/features/', json={
+            'title': 'CI Test Feature',
+            'desc': 'Feature created during CI testing'
+          })
+          assert resp.status_code == 200
+          feature_data = resp.json()
+          assert 'id' in feature_data
+          print('Feature creation working')
+          "
 
       - name: Pre-commit (all files)
         run: pre-commit run --all-files

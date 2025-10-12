@@ -79,3 +79,37 @@ def test_features_stats_with_data():
     assert data["avg_votes_per_feature"] == 1.5
     assert data["most_voted_feature"]["id"] == 1
     assert data["most_voted_feature"]["votes_count"] == 2
+
+
+def test_features_stats_single_feature_no_votes():
+    feat_store.reset_for_tests()
+
+    client.post("/features/", json={"title": "Single Feature", "desc": "No votes"})
+
+    response = client.get("/features/stats")
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["total_features"] == 1
+    assert data["total_votes"] == 0
+    assert data["total_vote_value"] == 0
+    assert data["avg_votes_per_feature"] == 0
+    assert data["most_voted_feature"]["votes_count"] == 0
+
+
+def test_features_stats_negative_votes():
+    feat_store.reset_for_tests()
+
+    client.post("/features/", json={"title": "Feature 1", "desc": "Test"})
+    client.post("/features/", json={"title": "Feature 2", "desc": "Test"})
+
+    client.post("/features/1/vote", json={"value": -1})
+    client.post("/features/1/vote", json={"value": -1})
+    client.post("/features/2/vote", json={"value": -1})
+
+    response = client.get("/features/stats")
+    assert response.status_code == 200
+    data = response.json()
+
+    assert data["total_vote_value"] == -3
+    assert data["most_voted_feature"]["votes_count"] == -2

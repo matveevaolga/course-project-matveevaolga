@@ -1,12 +1,22 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse, RedirectResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from app.core.errors import AppError
+from app.core.metrics import track_performance
 from app.features.routes import router as features_router
 
-app = FastAPI(title="Feature Vote App", version="0.1.0")
+app = FastAPI(title="SecDev Course App", version="0.1.0")
+
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 app.include_router(features_router)
+
+_db = {"items": []}
 
 
 @app.exception_handler(AppError)
@@ -32,14 +42,13 @@ def root():
 
 
 @app.get("/health")
+@track_performance("GET /health")
 def health_check():
     return {"status": "ok"}
 
 
-_db = {"items": []}
-
-
 @app.post("/items")
+@track_performance("POST /items")
 def create_item(name: str):
     if not name or len(name) > 100:
         raise AppError(
@@ -51,6 +60,7 @@ def create_item(name: str):
 
 
 @app.get("/items/{item_id}")
+@track_performance("GET /items/{id}")
 def get_item(item_id: int):
     for it in _db["items"]:
         if it["id"] == item_id:

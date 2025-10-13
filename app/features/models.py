@@ -1,9 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, constr
 
 
 class FeatureBase(BaseModel):
-    title: str
-    desc: str
+    title: constr(min_length=1, max_length=100)
+    desc: constr(min_length=1, max_length=500)
 
 
 class FeatureCreate(FeatureBase):

@@ -1,13 +1,12 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.core.errors import AppError
-from app.features.models import (  # ← ДОБАВЛЕНО FeatureUpdate
-    FeatureCreate,
-    FeatureResp,
-    FeatureUpdate,
-    VoteCreate,
-)
+from app.features.models import FeatureCreate, FeatureResp, FeatureUpdate, VoteCreate
 from app.features.store import feat_store
+
+limiter = Limiter(key_func=get_remote_address)
 
 router = APIRouter(prefix="/features", tags=["features"])
 
@@ -17,13 +16,42 @@ def get_all():
     return feat_store.get_all()
 
 
+@router.get("/stats")
+def get_stats():
+    features = feat_store.get_all_features()
+    votes = feat_store.get_all_votes()
+
+    total_features = len(features)
+    total_votes = len(votes)
+    avg_votes_per_feature = total_votes / total_features if total_features > 0 else 0
+    total_vote_value = sum(vote["value"] for vote in votes)
+
+    most_voted = None
+    if features:
+        most_voted_feature = max(features, key=lambda x: x["votes_count"])
+        most_voted = {
+            "id": most_voted_feature["id"],
+            "title": most_voted_feature["title"],
+            "votes_count": most_voted_feature["votes_count"],
+        }
+
+    return {
+        "total_features": total_features,
+        "total_votes": total_votes,
+        "total_vote_value": total_vote_value,
+        "avg_votes_per_feature": round(avg_votes_per_feature, 2),
+        "most_voted_feature": most_voted,
+    }
+
+
 @router.get("/top", response_model=list[FeatureResp])
 def get_top():
     return feat_store.get_top()
 
 
 @router.post("/", response_model=FeatureResp)
-def create(feat: FeatureCreate):
+@limiter.limit("100/minute")
+def create(feat: FeatureCreate, request: Request):
     return feat_store.create_feat(feat.title, feat.desc)
 
 
@@ -52,10 +80,10 @@ def delete(feat_id: int):
 
 
 @router.post("/{feat_id}/vote")
-def add_vote(feat_id: int, vote: VoteCreate):
+@limiter.limit("50/minute")
+def add_vote(feat_id: int, vote: VoteCreate, request: Request):
     if not feat_store.get_by_id(feat_id):
         raise AppError(code="not_found", msg="Feature not found", status=404)
 
     vote_data = feat_store.add_vote(feat_id, vote.value, user_id=1)
-
     return {"message": "Vote recorded", "vote_id": vote_data["id"]}

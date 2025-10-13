@@ -98,6 +98,7 @@ def test_features_stats_single_feature_no_votes():
 
 
 def test_features_stats_negative_votes():
+    """Test stats with negative votes"""
     feat_store.reset_for_tests()
 
     client.post("/features/", json={"title": "Feature 1", "desc": "Test"})
@@ -112,4 +113,5 @@ def test_features_stats_negative_votes():
     data = response.json()
 
     assert data["total_vote_value"] == -3
-    assert data["most_voted_feature"]["votes_count"] == -2
+    assert data["most_voted_feature"]["votes_count"] == -1
+    assert data["most_voted_feature"]["id"] == 2

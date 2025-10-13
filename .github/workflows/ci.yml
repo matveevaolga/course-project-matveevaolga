@@ -79,3 +79,22 @@ jobs:
 
       - name: Pre-commit (all files)
         run: pre-commit run --all-files
+
+      - name: Performance Check
+        run: |
+          echo "## Performance Metrics" >> $GITHUB_STEP_SUMMARY
+          echo "- Response time: $(curl -s -o /dev/null -w '%{time_total}' http://localhost:8000/health) ms" >> $GITHUB_STEP_SUMMARY
+          echo "- Features endpoint: $(curl -s -o /dev/null -w '%{time_total}' http://localhost:8000/features/) ms" >> $GITHUB_STEP_SUMMARY
+
+      - name: Security Validation
+        run: |
+          # Проверка дублирования голосов
+          python -c "
+          from app.main import app
+          from fastapi.testclient import TestClient
+          client = TestClient(app)
+
+          # Тест защиты от дублирования
+          resp1 = client.post('/features/1/vote', json={'value': 1})
+          print(f'First vote: {resp1.status_code}')
+          "

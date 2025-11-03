@@ -10,7 +10,7 @@ class FeatureStore:
         self._feat_cnt = 1
         self._vote_cnt = 1
 
-    def get_all(self) -> list:
+    def get_all(self):
         return list(self.features.values())
 
     def get_by_id(self, feat_id: int) -> dict:
@@ -63,9 +63,9 @@ class FeatureStore:
         self._vote_cnt += 1
         return self.votes[vote_id]
 
-    def get_top(self) -> list:
-        feats = list(self.features.values())
-        return sorted(feats, key=lambda x: x["votes_count"], reverse=True)
+    def get_top(self):
+        features = list(self.features.values())
+        return sorted(features, key=lambda x: x["votes_count"], reverse=True)[:10]
 
 
 feat_store = FeatureStore()

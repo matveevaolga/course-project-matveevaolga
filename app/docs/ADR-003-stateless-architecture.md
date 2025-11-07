@@ -1,0 +1,124 @@
+# ADR-003: Stateless архитектура API без серверных сессий
+
+## Status
+Accepted (2025-11-03)
+
+## Context
+Для обеспечения простоты масштабирования и отказоустойчивости системы Feature Votes требовалось:
+- Возможность горизонтального масштабирования при росте нагрузки
+- Отсутствие single point of failure в состоянии приложения
+- Простота развертывания и балансировки нагрузки
+- Минимальные требования к инфраструктуре для MVP
+
+**Требования из P03 NFR:**
+- SC1: Масштабируемость системы
+- AV1: Доступность >=99%
+
+## Decision
+Мы решили реализовать полностью **stateless API**, где каждый HTTP-запрос независим и не зависит от серверного состояния.
+
+**Архитектурные принципы:**
+- Отсутствие серверных сессий и состояния между запросами
+- Все данные состояния хранятся в in-memory хранилище (см. ADR-002)
+- Идемпотентные операции где возможно
+- Единообразные ответы независимо от экземпляра приложения
+
+**Реализация в коде:**
+```python
+@router.get("/stats")
+def get_stats():
+    return calculate_stats()
+
+@router.post("/{feat_id}/vote")
+def add_vote(feat_id: int, vote: VoteCreate):
+    return feat_store.add_vote(feat_id, vote.value, user_id=1)
+```
+
+**Alternatives Considered**
+
+**Альтернатива 1: Stateful с серверными сессиями**
+**Плюсы:**
+- Более простой код для пользовательских сценариев
+- Естественная модель для tracking пользовательских действий
+
+**Минусы:**
+- Сложность масштабирования (sticky sessions)
+- Привязка пользователей к конкретным экземплярам приложения
+- Проблемы при падении экземпляров (потеря состояния)
+
+**Альтернатива 2: Внешнее хранилище состояния (Redis/Session storage)**
+**Плюсы:**
+- Надежное хранение состояния
+- Независимость от экземпляров приложения
+
+**Минусы:**
+- Дополнительная инфраструктурная зависимость
+- Сложность реализации и тестирования
+- Network latency на каждый запрос
+
+**Альтернатива 3: Hybrid approach (сессии только где необходимо)**
+**Плюсы:**
+- Баланс между простотой и функциональностью
+- Сессии только для критичных операций
+
+**Минусы:**
+- Усложнение архитектуры
+- Несогласованность в подходах
+
+## Consequences
+**Положительные:**
+- Простое масштабирование - можно запускать multiple instances
+- Отказоустойчивость - падение одного экземпляра не влияет на других
+- Простое развертывание - нет миграций состояния между версиями
+- Предсказуемое поведение - одинаковые запросы = одинаковые ответы
+
+**Отрицательные:**
+- Нет встроенной сессии пользователя - нельзя track user journey
+- Ограничения для long-running операций - все должно завершаться в рамках одного запроса
+- Повторяющиеся вычисления - некоторые данные пересчитываются для каждого запроса
+
+## Security Impact
+**Риски:**
+- Нет рисков связанных с утечкой сессионных данных
+- Упрощенная модель аутентификации (см. голосование без user context)
+
+**Mitigation:**
+- Stateless JWT tokens могли бы решить аутентификацию в будущем
+- Мониторинг аномальной активности на уровне нагрузки
+
+**Связь с Threat Modeling (P04):**
+- Упрощенная модель угроз - нет рисков session hijacking
+- Фокус на integrity и availability атаках
+
+**Связь с NFR (P03):**
+- Соответствует SC1: "Масштабируемость системы"
+- Соответствует AV1: "Доступность >=99%"
+
+## Rollout Plan
+**Definition of Done (DoD):**
+- Все API endpoints реализованы как stateless
+- Нет серверного состояния между запросами
+- Тесты подтверждают независимость запросов
+- Документация описывает stateless nature API
+
+**План внедрения:**
+- Этап 1: Проектирование stateless endpoints (1 день)
+- Этап 2: Реализация и тестирование (2 дня)
+- Этап 3: Валидация масштабируемости (1 день)
+
+## References
+- [Исходный код API endpoints](https://github.com/matveevaolga/course-project-matveevaolga/blob/p05-caching-adr/app/features/routes.py)
+- [P03 NFR Requirements](https://github.com/matveevaolga/course-project-matveevaolga/blob/p03-nfr-requirements/docs/NFR.md)
+- [P04 Threat Modeling](https://github.com/matveevaolga/course-project-matveevaolga/blob/p04-threat-modeling/docs/STRIDE.md)
+- [ADR-001: Caching implementation](https://github.com/matveevaolga/course-project-matveevaolga/blob/p05-caching-adr/app/docs/ADR-001-caching.md)
+- [ADR-002: In-memory storage](https://github.com/matveevaolga/course-project-matveevaolga/blob/p05-caching-adr/app/docs/ADR-002-in-memory-storage.md)
+
+## Related Issues
+- [Issue #13](https://github.com/matveevaolga/course-project-matveevaolga/issues/13) - ADR-003 Stateless Architecture
+
+## Commits
+- Реализация stateless API: коммит [f8282c6](https://github.com/matveevaolga/course-project-matveevaolga/commit/f8282c6a17892fa90345fff21da6a66785bcc280)
+
+## Related ADRs
+- [ADR-001: Caching implementation](https://github.com/matveevaolga/course-project-matveevaolga/blob/p05-caching-adr/app/docs/ADR-001-caching.md)
+- [ADR-002: In-memory storage](https://github.com/matveevaolga/course-project-matveevaolga/blob/p05-caching-adr/app/docs/ADR-002-in-memory-storage.md)

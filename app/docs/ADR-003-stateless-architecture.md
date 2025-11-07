@@ -12,7 +12,7 @@ Accepted (2025-11-03)
 
 **Требования из P03 NFR:**
 - SC1: Масштабируемость системы
-- AV1: Доступность 99%+
+- AV1: Доступность >=99%
 
 ## Decision
 Мы решили реализовать полностью **stateless API**, где каждый HTTP-запрос независим и не зависит от серверного состояния.
@@ -92,7 +92,7 @@ def add_vote(feat_id: int, vote: VoteCreate):
 
 **Связь с NFR (P03):**
 - Соответствует SC1: "Масштабируемость системы"
-- Соответствует AV1: "Доступность 99%+"
+- Соответствует AV1: "Доступность >=99%"
 
 ## Rollout Plan
 **Definition of Done (DoD):**
@@ -102,9 +102,9 @@ def add_vote(feat_id: int, vote: VoteCreate):
 - Документация описывает stateless nature API
 
 **План внедрения:**
-- Фаза 1: Проектирование stateless endpoints (1 день)
-- Фаза 2: Реализация и тестирование (2 дня)
-- Фаза 3: Валидация масштабируемости (1 день)
+- Этап 1: Проектирование stateless endpoints (1 день)
+- Этап 2: Реализация и тестирование (2 дня)
+- Этап 3: Валидация масштабируемости (1 день)
 
 ## References
 - Исходный код API endpoints
@@ -114,11 +114,11 @@ def add_vote(feat_id: int, vote: VoteCreate):
 - ADR-002: In-Memory Storage
 
 ## Related Issues
-- Issue #Z - ADR-003 Stateless Architecture
+- Issue #13 - ADR-003 Stateless Architecture
 
 ## Commits
-- Реализация stateless API: коммит ghi789
+- Реализация stateless API: коммит [f8282c6](https://github.com/matveevaolga/course-project-matveevaolga/commit/f8282c6a17892fa90345fff21da6a66785bcc280)
 
 ## Related ADRs
-- [ADR-001: Caching implementation](./ADR-001-caching-implementation.md)
-- [ADR-002: In-memory storage](./ADR-002-in-memory-storage.md)
+- [ADR-001: Caching implementation](https://github.com/matveevaolga/course-project-matveevaolga/blob/p05-caching-adr/app/docs/ADR-001-caching.md)
+- [ADR-002: In-memory storage](https://github.com/matveevaolga/course-project-matveevaolga/blob/p05-caching-adr/app/docs/ADR-002-in-memory-storage.md)

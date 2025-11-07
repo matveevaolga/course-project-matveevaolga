@@ -1,12 +1,7 @@
 from fastapi import APIRouter
 
 from app.core.errors import AppError
-from app.features.models import (  # ← ДОБАВЛЕНО FeatureUpdate
-    FeatureCreate,
-    FeatureResp,
-    FeatureUpdate,
-    VoteCreate,
-)
+from app.features.models import FeatureCreate, FeatureResp, FeatureUpdate, VoteCreate
 from app.features.store import feat_store
 
 router = APIRouter(prefix="/features", tags=["features"])

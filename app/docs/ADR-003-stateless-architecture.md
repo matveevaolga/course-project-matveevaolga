@@ -114,7 +114,7 @@ def add_vote(feat_id: int, vote: VoteCreate):
 - [ADR-002: In-memory storage](https://github.com/matveevaolga/course-project-matveevaolga/blob/p05-caching-adr/app/docs/ADR-002-in-memory-storage.md)
 
 ## Related Issues
-- Issue #13 - ADR-003 Stateless Architecture
+- [Issue #13](https://github.com/matveevaolga/course-project-matveevaolga/issues/13) - ADR-003 Stateless Architecture
 
 ## Commits
 - Реализация stateless API: коммит [f8282c6](https://github.com/matveevaolga/course-project-matveevaolga/commit/f8282c6a17892fa90345fff21da6a66785bcc280)

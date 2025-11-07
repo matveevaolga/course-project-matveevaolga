@@ -94,12 +94,12 @@ class FeatureStore:
 **План внедрения:**
 - Этап 1: Разработка FeatureStore (1 день)
 - Этап 2: Интеграция с API endpoints (1 день)
-- Фаза 3: Тестирование (1 день)
+- Этап 3: Тестирование (1 день)
 
 ## References
-- Исходный код FeatureStore
-- P03 NFR Requirements
-- ADR-001: Caching Implementation
+- [Исходный код FeatureStore](https://github.com/matveevaolga/course-project-matveevaolga/blob/p05-caching-adr/app/features/store.py)
+- [P03 NFR Requirements](https://github.com/matveevaolga/course-project-matveevaolga/blob/p03-nfr-requirements/docs/NFR.md)
+- [ADR-001: Caching Implementation](https://github.com/matveevaolga/course-project-matveevaolga/blob/p05-caching-adr/app/docs/ADR-001-caching.md)
 
 ## Related Issues
 - Issue #12 - ADR-002 Storage Architecture

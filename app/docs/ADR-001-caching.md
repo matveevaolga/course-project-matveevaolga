@@ -108,13 +108,13 @@
 
 ## References
 - [Python datetime documentation](https://docs.python.org/3/library/datetime.html)
-- [P03 NFR Requirements](https://github.com/hse-secdev-2025-fall/course-project-matveevaolga/blob/p03-nfr-requirements/docs/NFR.md)
-- [P04 Threat Modeling](https://github.com/hse-secdev-2025-fall/course-project-matveevaolga/blob/p04-threat-modeling/docs/STRIDE.md)
+- [P03 NFR Requirements](https://github.com/matveevaolga/course-project-matveevaolga/blob/p03-nfr-requirements/docs/NFR.md)
+- [P04 Threat Modeling](https://github.com/matveevaolga/course-project-matveevaolga/blob/p04-threat-modeling/docs/STRIDE.md)
 
 ## Commits
-- Реализация кеширования: [коммит e0a7e39](https://github.com/hse-secdev-2025-fall/course-project-matveevaolga/pull/22/commits/e0a7e3982471ceaafea78837171c89e8023e692b)
-- Тесты кеширования: [коммит e0a7e39](https://github.com/hse-secdev-2025-fall/course-project-matveevaolga/pull/22/commits/e0a7e3982471ceaafea78837171c89e8023e692b)
+- Реализация кеширования: [коммит f8282c6](https://github.com/matveevaolga/course-project-matveevaolga/commit/f8282c6a17892fa90345fff21da6a66785bcc280)
+- Тесты кеширования: [коммит f8282c6](https://github.com/matveevaolga/course-project-matveevaolga/commit/f8282c6a17892fa90345fff21da6a66785bcc280)
 
 ## Related ADRs
-- [ADR-002: In-memory storage](./ADR-002-in-memory-storage.md)
-- [ADR-003: Simple cache instead of Redis](./ADR-003-simple-cache.md)
+- [ADR-002: In-memory storage](https://github.com/matveevaolga/course-project-matveevaolga/blob/p05-caching-adr/app/docs/ADR-002-in-memory-storage.md)
+- [ADR-003: Stateless architecture](https://github.com/matveevaolga/course-project-matveevaolga/blob/p05-caching-adr/app/docs/ADR-003-stateless-architecture.md)

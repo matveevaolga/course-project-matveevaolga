@@ -92,8 +92,8 @@ class FeatureStore:
 - Тесты покрывают все сценарии работы хранилища
 
 **План внедрения:**
-- Фаза 1: Разработка FeatureStore (1 день)
-- Фаза 2: Интеграция с API endpoints (1 день)
+- Этап 1: Разработка FeatureStore (1 день)
+- Этап 2: Интеграция с API endpoints (1 день)
 - Фаза 3: Тестирование (1 день)
 
 ## References
@@ -102,11 +102,11 @@ class FeatureStore:
 - ADR-001: Caching Implementation
 
 ## Related Issues
-- Issue #X - ADR-002 Storage Architecture
+- Issue #12 - ADR-002 Storage Architecture
 
 ## Commits
-- Реализация: коммит abc123
+- Реализация: коммит [f8282c6](https://github.com/matveevaolga/course-project-matveevaolga/commit/f8282c6a17892fa90345fff21da6a66785bcc280)
 
 ## Related ADRs
-- [ADR-001: Caching implementation](./ADR-001-caching-implementation.md)
-- [ADR-003: Stateless architecture](./ADR-003-stateless-architecture.md)
+- [ADR-001: Caching implementation](https://github.com/matveevaolga/course-project-matveevaolga/blob/p05-caching-adr/app/docs/ADR-001-caching.md)
+- [ADR-003: Stateless architecture](https://github.com/matveevaolga/course-project-matveevaolga/blob/p05-caching-adr/app/docs/ADR-003-stateless-architecture.md)

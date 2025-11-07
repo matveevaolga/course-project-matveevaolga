@@ -114,3 +114,7 @@
 ## Commits
 - Реализация кеширования: [коммит e0a7e39](https://github.com/hse-secdev-2025-fall/course-project-matveevaolga/pull/22/commits/e0a7e3982471ceaafea78837171c89e8023e692b)
 - Тесты кеширования: [коммит e0a7e39](https://github.com/hse-secdev-2025-fall/course-project-matveevaolga/pull/22/commits/e0a7e3982471ceaafea78837171c89e8023e692b)
+
+## Related ADRs
+- [ADR-002: In-memory storage](./ADR-002-in-memory-storage.md)
+- [ADR-003: Simple cache instead of Redis](./ADR-003-simple-cache.md)

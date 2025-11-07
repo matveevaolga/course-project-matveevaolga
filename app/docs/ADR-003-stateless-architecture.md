@@ -108,10 +108,10 @@ def add_vote(feat_id: int, vote: VoteCreate):
 
 ## References
 - Исходный код API endpoints
-- P03 NFR Requirements
-- P04 Threat Modeling
-- ADR-001: Caching Implementation
-- ADR-002: In-Memory Storage
+- [P03 NFR Requirements](https://github.com/matveevaolga/course-project-matveevaolga/blob/p03-nfr-requirements/docs/NFR.md)
+- [P04 Threat Modeling](https://github.com/matveevaolga/course-project-matveevaolga/blob/p04-threat-modeling/docs/STRIDE.md)
+- [ADR-001: Caching implementation](https://github.com/matveevaolga/course-project-matveevaolga/blob/p05-caching-adr/app/docs/ADR-001-caching.md)
+- [ADR-002: In-memory storage](https://github.com/matveevaolga/course-project-matveevaolga/blob/p05-caching-adr/app/docs/ADR-002-in-memory-storage.md)
 
 ## Related Issues
 - Issue #13 - ADR-003 Stateless Architecture

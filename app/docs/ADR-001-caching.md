@@ -111,6 +111,9 @@
 - [P03 NFR Requirements](https://github.com/matveevaolga/course-project-matveevaolga/blob/p03-nfr-requirements/docs/NFR.md)
 - [P04 Threat Modeling](https://github.com/matveevaolga/course-project-matveevaolga/blob/p04-threat-modeling/docs/STRIDE.md)
 
+## Related Issues
+- [Issue #8](https://github.com/matveevaolga/course-project-matveevaolga/issues/8) - ADR-001 Caching implementation
+
 ## Commits
 - Реализация кеширования: [коммит f8282c6](https://github.com/matveevaolga/course-project-matveevaolga/commit/f8282c6a17892fa90345fff21da6a66785bcc280)
 - Тесты кеширования: [коммит f8282c6](https://github.com/matveevaolga/course-project-matveevaolga/commit/f8282c6a17892fa90345fff21da6a66785bcc280)

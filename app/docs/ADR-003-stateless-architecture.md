@@ -107,7 +107,7 @@ def add_vote(feat_id: int, vote: VoteCreate):
 - Этап 3: Валидация масштабируемости (1 день)
 
 ## References
-- Исходный код API endpoints
+- [Исходный код API endpoints](https://github.com/matveevaolga/course-project-matveevaolga/blob/p05-caching-adr/app/features/routes.py)
 - [P03 NFR Requirements](https://github.com/matveevaolga/course-project-matveevaolga/blob/p03-nfr-requirements/docs/NFR.md)
 - [P04 Threat Modeling](https://github.com/matveevaolga/course-project-matveevaolga/blob/p04-threat-modeling/docs/STRIDE.md)
 - [ADR-001: Caching implementation](https://github.com/matveevaolga/course-project-matveevaolga/blob/p05-caching-adr/app/docs/ADR-001-caching.md)

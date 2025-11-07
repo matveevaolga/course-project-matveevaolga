@@ -102,7 +102,7 @@ class FeatureStore:
 - [ADR-001: Caching Implementation](https://github.com/matveevaolga/course-project-matveevaolga/blob/p05-caching-adr/app/docs/ADR-001-caching.md)
 
 ## Related Issues
-- Issue #12 - ADR-002 Storage Architecture
+- [Issue #12](https://github.com/matveevaolga/course-project-matveevaolga/issues/12) - ADR-002 Storage Architecture
 
 ## Commits
 - Реализация: коммит [f8282c6](https://github.com/matveevaolga/course-project-matveevaolga/commit/f8282c6a17892fa90345fff21da6a66785bcc280)

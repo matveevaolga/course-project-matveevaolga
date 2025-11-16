@@ -4,9 +4,13 @@ on:
   pull_request:
   push:
     branches: [main]
+  schedule:
+    - cron: '0 2 * * 1'
 
 permissions:
   contents: read
+  security-events: write
+  actions: read
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -48,25 +52,21 @@ jobs:
           from fastapi.testclient import TestClient
           client = TestClient(app)
 
-          # Проверка здоровья приложения
           resp = client.get('/health')
           assert resp.status_code == 200
           assert resp.json() == {'status': 'ok'}
           print('Health check passed')
 
-          # Проверка получения фич
           resp = client.get('/features/')
           assert resp.status_code == 200
           assert isinstance(resp.json(), list)
           print('Features endpoint working')
 
-          # Проверка топ фич
           resp = client.get('/features/top')
           assert resp.status_code == 200
           assert isinstance(resp.json(), list)
           print('Top features endpoint working')
 
-          # Создание тестовой фичи
           resp = client.post('/features/', json={
             'title': 'CI Test Feature',
             'desc': 'Feature created during CI testing'
@@ -79,3 +79,64 @@ jobs:
 
       - name: Pre-commit (all files)
         run: pre-commit run --all-files
+
+  security-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Hadolint with custom config
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+          config: .hadolint.yaml
+          format: sarif
+          output-file: hadolint-results.sarif
+          failure-threshold: warning
+
+      - name: Upload Hadolint results as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hadolint-security-report
+          path: hadolint-results.sarif
+          retention-days: 30
+
+      - name: Build Docker image
+        run: docker build -t feature-votes-app:latest .
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'feature-votes-app:latest'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+          ignore-policy: .trivyignore
+
+      - name: Upload Trivy results as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-security-report
+          path: trivy-results.sarif
+          retention-days: 30
+
+      - name: Upload Trivy results to GitHub Security Tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Generate Security Scan Summary
+        run: |
+          echo "## Security Scan Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Hadolint (Dockerfile Lint)" >> $GITHUB_STEP_SUMMARY
+          echo "- Custom configuration applied" >> $GITHUB_STEP_SUMMARY
+          echo "- Report saved as artifact" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Trivy (Vulnerability Scan)" >> $GITHUB_STEP_SUMMARY
+          echo "- Custom ignore policies applied" >> $GITHUB_STEP_SUMMARY
+          echo "- Report saved as artifact" >> $GITHUB_STEP_SUMMARY
+          echo "- Weekly scheduled scans" >> $GITHUB_STEP_SUMMARY

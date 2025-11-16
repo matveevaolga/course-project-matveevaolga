@@ -87,6 +87,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Clean up any problematic files
+        run: |
+          rm -f trivy.rego
+          rm -f .trivyignore
+
       - name: Run Hadolint with custom config
         uses: hadolint/hadolint-action@v3.1.0
         with:
@@ -114,7 +119,7 @@ jobs:
           output: 'trivy-results.sarif'
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
-          ignore-policy: .trivyignore
+          skip-version-check: true
 
       - name: Upload Trivy results as artifact
         uses: actions/upload-artifact@v4
@@ -133,10 +138,11 @@ jobs:
           echo "## Security Scan Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Hadolint (Dockerfile Lint)" >> $GITHUB_STEP_SUMMARY
-          echo "- Custom configuration applied" >> $GITHUB_STEP_SUMMARY
+          echo "- Custom configuration applied (.hadolint.yaml)" >> $GITHUB_STEP_SUMMARY
           echo "- Report saved as artifact" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Trivy (Vulnerability Scan)" >> $GITHUB_STEP_SUMMARY
-          echo "- Custom ignore policies applied" >> $GITHUB_STEP_SUMMARY
+          echo "- Critical/High severity scan completed" >> $GITHUB_STEP_SUMMARY
           echo "- Report saved as artifact" >> $GITHUB_STEP_SUMMARY
           echo "- Weekly scheduled scans" >> $GITHUB_STEP_SUMMARY
+          echo "- Custom policies via CI configuration" >> $GITHUB_STEP_SUMMARY

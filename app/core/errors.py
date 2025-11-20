@@ -1,9 +1,4 @@
-import logging
-
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+from app.core.security import secure_logger
 
 
 class AppError(Exception):
@@ -11,4 +6,4 @@ class AppError(Exception):
         self.code = code
         self.msg = msg
         self.status = status
-        logger.warning(f"AppError: {code} (status: {status})")
+        secure_logger.warning(f"AppError: {code} (status: {status}) - Message: {msg}")

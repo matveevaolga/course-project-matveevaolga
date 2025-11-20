@@ -6,7 +6,7 @@ client = TestClient(app)
 
 
 class TestSecurityValidation:
-    def test_xss_attempt_in_title(self):
+    def test_xss_attempt_in_title(self) -> None:
         """Test that XSS attempts in title are blocked"""
         response = client.post(
             "/features/",
@@ -14,7 +14,7 @@ class TestSecurityValidation:
         )
         assert response.status_code == 422
 
-    def test_xss_attempt_in_description(self):
+    def test_xss_attempt_in_description(self) -> None:
         """Test that XSS attempts in description are blocked"""
         response = client.post(
             "/features/",
@@ -25,7 +25,7 @@ class TestSecurityValidation:
         )
         assert response.status_code == 422
 
-    def test_sql_injection_attempt(self):
+    def test_sql_injection_attempt(self) -> None:
         """Test that SQL injection patterns are blocked"""
         injection_attempts = [
             "test' OR '1'='1",
@@ -40,7 +40,7 @@ class TestSecurityValidation:
             )
             assert response.status_code == 422, f"SQL injection not blocked: {attempt}"
 
-    def test_title_length_validation(self):
+    def test_title_length_validation(self) -> None:
         """Test title length validation"""
         response = client.post(
             "/features/", json={"title": "a" * 101, "desc": "Test description"}
@@ -52,12 +52,12 @@ class TestSecurityValidation:
         )
         assert response.status_code == 422
 
-    def test_description_length_validation(self):
+    def test_description_length_validation(self) -> None:
         """Test description length validation"""
         response = client.post("/features/", json={"title": "Test", "desc": "a" * 501})
         assert response.status_code == 422
 
-    def test_vote_value_validation(self):
+    def test_vote_value_validation(self) -> None:
         """Test vote value validation"""
         create_resp = client.post(
             "/features/", json={"title": "Test Feature", "desc": "Test Description"}
@@ -70,7 +70,7 @@ class TestSecurityValidation:
         response = client.post(f"/features/{feature_id}/vote", json={"value": 6})
         assert response.status_code == 422
 
-    def test_security_headers_present(self):
+    def test_security_headers_present(self) -> None:
         """Test that security headers are present"""
         response = client.get("/health")
         assert response.status_code == 200
@@ -78,7 +78,7 @@ class TestSecurityValidation:
         assert response.headers["X-Content-Type-Options"] == "nosniff"
         assert "X-Frame-Options" in response.headers
 
-    def test_malformed_json_handling(self):
+    def test_malformed_json_handling(self) -> None:
         """Test handling of malformed JSON"""
         response = client.post(
             "/features/",
@@ -87,14 +87,14 @@ class TestSecurityValidation:
         )
         assert response.status_code in [400, 422]
 
-    def test_whitespace_only_rejection(self):
+    def test_whitespace_only_rejection(self) -> None:
         """Test that whitespace-only titles are rejected"""
         response = client.post("/features/", json={"title": "   ", "desc": "Test"})
         assert response.status_code == 422
 
 
 class TestErrorHandling:
-    def test_error_response_safety(self):
+    def test_error_response_safety(self) -> None:
         """Test that error responses don't leak internal information"""
         response = client.get("/features/999999")
         assert response.status_code == 404

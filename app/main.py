@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -7,13 +9,13 @@ from app.features.routes import router as features_router
 
 
 class SecurityHeadersMiddleware:
-    def __init__(self, app):
+    def __init__(self, app: Any) -> None:
         self.app = app
 
-    async def __call__(self, scope, receive, send):
+    async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
         if scope["type"] == "http":
 
-            async def send_with_headers(message):
+            async def send_with_headers(message: Any) -> None:
                 if message["type"] == "http.response.start":
                     headers = dict(message.get("headers", []))
                     headers[b"x-content-type-options"] = b"nosniff"
@@ -44,7 +46,7 @@ app.include_router(features_router)
 
 
 @app.exception_handler(AppError)
-async def handle_app_error(req: Request, exc: AppError):
+async def handle_app_error(req: Request, exc: AppError) -> JSONResponse:
     return JSONResponse(
         status_code=exc.status,
         content={"error": {"code": exc.code, "message": exc.msg}},
@@ -52,7 +54,7 @@ async def handle_app_error(req: Request, exc: AppError):
 
 
 @app.exception_handler(HTTPException)
-async def handle_http_error(req: Request, exc: HTTPException):
+async def handle_http_error(req: Request, exc: HTTPException) -> JSONResponse:
     detail = exc.detail if isinstance(exc.detail, str) else "http_error"
     return JSONResponse(
         status_code=exc.status_code,
@@ -61,10 +63,10 @@ async def handle_http_error(req: Request, exc: HTTPException):
 
 
 @app.get("/")
-def root():
+def root() -> RedirectResponse:
     return RedirectResponse(url="/docs")
 
 
 @app.get("/health")
-def health_check():
+def health_check() -> Dict[str, str]:
     return {"status": "ok"}

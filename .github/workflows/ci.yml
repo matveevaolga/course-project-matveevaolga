@@ -29,6 +29,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+          pip install -r requirements-dev.txt
           pip install pytest ruff black isort coverage bandit
 
       - name: Security lint with ruff
@@ -45,17 +46,33 @@ jobs:
       - name: Check imports with isort
         run: isort --check-only .
 
+      - name: Run mypy static type checking
+        run: |
+          echo "## MyPy Static Type Checking" >> $GITHUB_STEP_SUMMARY
+          mypy app/ tests/ --ignore-missing-imports
+          if [ $? -eq 0 ]; then
+            echo "MyPy passed - no type errors found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "MyPy found type errors" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
       - name: Run security tests
         run: |
           echo "## Security Test Results" >> $GITHUB_STEP_SUMMARY
           pytest tests/test_security.py -v && echo "All security tests passed" >> $GITHUB_STEP_SUMMARY || echo "Security tests failed" >> $GITHUB_STEP_SUMMARY
+
+      - name: Run PII masking tests
+        run: |
+          echo "## PII Masking Test Results" >> $GITHUB_STEP_SUMMARY
+          pytest tests/test_pii_masking.py -v && echo "All PII masking tests passed" >> $GITHUB_STEP_SUMMARY || echo "PII masking tests failed" >> $GITHUB_STEP_SUMMARY
 
       - name: Run all tests with coverage
         run: |
           coverage run -m pytest tests/ -v
           coverage report
           echo "## Test Coverage" >> $GITHUB_STEP_SUMMARY
-          echo "Coverage report generated" >> $GITHUB_STEP_SUMMARY
+          coverage report >> $GITHUB_STEP_SUMMARY
 
       - name: Domain smoke test
         run: |

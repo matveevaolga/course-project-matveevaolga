@@ -18,7 +18,7 @@ class FeatureBase(BaseModel):
 
     @field_validator("title")
     @classmethod
-    def validate_title(cls, v):
+    def validate_title(cls, v: str) -> str:
         if not v or not v.strip():
             raise ValueError(TITLE_EMPTY_ERROR)
 
@@ -49,7 +49,7 @@ class FeatureBase(BaseModel):
 
     @field_validator("desc")
     @classmethod
-    def validate_desc(cls, v):
+    def validate_desc(cls, v: str) -> str:
         if not v or not v.strip():
             raise ValueError(DESC_EMPTY_ERROR)
 
@@ -82,7 +82,7 @@ class VoteBase(BaseModel):
 
     @field_validator("value")
     @classmethod
-    def validate_vote_value(cls, v):
+    def validate_vote_value(cls, v: int) -> int:
         if v not in [1, 2, 3, 4, 5]:
             raise ValueError(VOTE_VALUE_ERROR)
         return v

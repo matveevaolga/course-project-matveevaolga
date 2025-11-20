@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from fastapi import APIRouter
 
 from app.core.errors import AppError
@@ -8,22 +10,22 @@ router = APIRouter(prefix="/features", tags=["features"])
 
 
 @router.get("/", response_model=list[FeatureResp])
-def get_all():
+def get_all() -> list[Dict[str, Any]]:
     return feat_store.get_all()
 
 
 @router.get("/top", response_model=list[FeatureResp])
-def get_top():
+def get_top() -> list[Dict[str, Any]]:
     return feat_store.get_top()
 
 
 @router.post("/", response_model=FeatureResp)
-def create(feat: FeatureCreate):
+def create(feat: FeatureCreate) -> Dict[str, Any]:
     return feat_store.create_feat(feat.title, feat.desc)
 
 
 @router.get("/{feat_id}", response_model=FeatureResp)
-def get_one(feat_id: int):
+def get_one(feat_id: int) -> Dict[str, Any]:
     feat = feat_store.get_by_id(feat_id)
     if not feat:
         raise AppError(code="not_found", msg="Feature not found", status=404)
@@ -31,7 +33,7 @@ def get_one(feat_id: int):
 
 
 @router.put("/{feat_id}", response_model=FeatureResp)
-def update(feat_id: int, feat: FeatureUpdate):
+def update(feat_id: int, feat: FeatureUpdate) -> Dict[str, Any]:
     updated_feat = feat_store.update_feat(feat_id, feat.title, feat.desc)
     if not updated_feat:
         raise AppError(code="not_found", msg="Feature not found", status=404)
@@ -39,7 +41,7 @@ def update(feat_id: int, feat: FeatureUpdate):
 
 
 @router.delete("/{feat_id}")
-def delete(feat_id: int):
+def delete(feat_id: int) -> Dict[str, str]:
     success = feat_store.delete_feat(feat_id)
     if not success:
         raise AppError(code="not_found", msg="Feature not found", status=404)
@@ -47,7 +49,7 @@ def delete(feat_id: int):
 
 
 @router.post("/{feat_id}/vote")
-def add_vote(feat_id: int, vote: VoteCreate):
+def add_vote(feat_id: int, vote: VoteCreate) -> Dict[str, Any]:
     if not feat_store.get_by_id(feat_id):
         raise AppError(code="not_found", msg="Feature not found", status=404)
 

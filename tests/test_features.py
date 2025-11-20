@@ -5,7 +5,7 @@ from app.main import app
 client = TestClient(app)
 
 
-def test_create_feat():
+def test_create_feat() -> None:
     resp = client.post("/features/", json={"title": "New Feature", "desc": "Test"})
     assert resp.status_code == 200
     data = resp.json()
@@ -13,7 +13,7 @@ def test_create_feat():
     assert data["votes_count"] == 0
 
 
-def test_vote_for_feat():
+def test_vote_for_feat() -> None:
     feat_resp = client.post("/features/", json={"title": "Vote Test", "desc": "Test"})
     feat_id = feat_resp.json()["id"]
 
@@ -24,13 +24,13 @@ def test_vote_for_feat():
     assert feat_after["votes_count"] == 1
 
 
-def test_get_top_feats():
+def test_get_top_feats() -> None:
     resp = client.get("/features/top")
     assert resp.status_code == 200
     assert isinstance(resp.json(), list)
 
 
-def test_feature_votes_workflow():
+def test_feature_votes_workflow() -> None:
     create_resp = client.post(
         "/features/", json={"title": "some feature", "desc": "some feature"}
     )

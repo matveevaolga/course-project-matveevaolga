@@ -82,7 +82,7 @@ class TestSecurityValidation:
         """Test handling of malformed JSON"""
         response = client.post(
             "/features/",
-            data='{"title": "test", "desc": "test"',
+            content='{"title": "test", "desc": "test"'.encode(),
             headers={"Content-Type": "application/json"},
         )
         assert response.status_code in [400, 422]

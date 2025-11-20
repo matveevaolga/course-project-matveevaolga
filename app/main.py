@@ -1,16 +1,52 @@
+from typing import Any, Dict
+
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, RedirectResponse
 
 from app.core.errors import AppError
 from app.features.routes import router as features_router
 
+
+class SecurityHeadersMiddleware:
+    def __init__(self, app: Any) -> None:
+        self.app = app
+
+    async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
+        if scope["type"] == "http":
+
+            async def send_with_headers(message: Any) -> None:
+                if message["type"] == "http.response.start":
+                    headers = dict(message.get("headers", []))
+                    headers[b"x-content-type-options"] = b"nosniff"
+                    headers[b"x-frame-options"] = b"DENY"
+                    headers[b"x-xss-protection"] = b"1; mode=block"
+                    headers[b"referrer-policy"] = b"strict-origin-when-cross-origin"
+                    message["headers"] = [(k, v) for k, v in headers.items()]
+                await send(message)
+
+            await self.app(scope, receive, send_with_headers)
+        else:
+            await self.app(scope, receive, send)
+
+
 app = FastAPI(title="Feature Vote App", version="0.1.0")
+
+app.add_middleware(SecurityHeadersMiddleware)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.include_router(features_router)
 
 
 @app.exception_handler(AppError)
-async def handle_app_error(req: Request, exc: AppError):
+async def handle_app_error(req: Request, exc: AppError) -> JSONResponse:
     return JSONResponse(
         status_code=exc.status,
         content={"error": {"code": exc.code, "message": exc.msg}},
@@ -18,7 +54,7 @@ async def handle_app_error(req: Request, exc: AppError):
 
 
 @app.exception_handler(HTTPException)
-async def handle_http_error(req: Request, exc: HTTPException):
+async def handle_http_error(req: Request, exc: HTTPException) -> JSONResponse:
     detail = exc.detail if isinstance(exc.detail, str) else "http_error"
     return JSONResponse(
         status_code=exc.status_code,
@@ -27,32 +63,10 @@ async def handle_http_error(req: Request, exc: HTTPException):
 
 
 @app.get("/")
-def root():
+def root() -> RedirectResponse:
     return RedirectResponse(url="/docs")
 
 
 @app.get("/health")
-def health_check():
+def health_check() -> Dict[str, str]:
     return {"status": "ok"}
-
-
-_db = {"items": []}
-
-
-@app.post("/items")
-def create_item(name: str):
-    if not name or len(name) > 100:
-        raise AppError(
-            code="validation_error", msg="name must be 1..100 chars", status=422
-        )
-    item = {"id": len(_db["items"]) + 1, "name": name}
-    _db["items"].append(item)
-    return item
-
-
-@app.get("/items/{item_id}")
-def get_item(item_id: int):
-    for it in _db["items"]:
-        if it["id"] == item_id:
-            return it
-    raise AppError(code="not_found", msg="item not found", status=404)

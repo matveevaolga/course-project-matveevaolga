@@ -1,9 +1,107 @@
+[project]
+name = "feature-votes"
+version = "0.1.0"
+description = "Feature voting API"
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+    "pydantic>=2.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=45.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [tool.ruff]
 line-length = 100
-lint.select = ["E","F","W","I"]
-target-version = "py311"
-exclude = ["venv",".venv","build","dist"]
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E", "F", "W",
+    "I",
+    "B", "BLE",
+    "S",
+    "TRY",
+    "FLY",
+]
+extend-select = ["B", "BLE"]  # ПЕРЕМЕЩЕНО В СЕКЦИЮ LINT
+ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/*.py" = ["S101"]
+
+[tool.ruff.lint.flake8-bandit]
+hardcoded-tmp-directory = []
 
 [tool.isort]
 profile = "black"
 line_length = 100
+known_first_party = ["app"]
+
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "*/migrations/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--verbose",
+    "--strict-markers",
+    "--strict-config",
+    "--tb=short",
+]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "security: security related tests",
+]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "pydantic.*",
+    "fastapi.*",
+    "uvicorn.*"
+]
+ignore_missing_imports = true
+
+# Добавьте эту секцию для игнорирования ошибок декораторов
+[[tool.mypy.overrides]]
+module = [
+    "app.features.models",
+    "app.features.routes",
+    "app.main"
+]
+disallow_untyped_decorators = false

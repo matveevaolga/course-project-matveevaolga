@@ -1,20 +1,37 @@
-# Build stage
-FROM python:3.11-slim AS build
+FROM python:3.11-slim AS builder
 WORKDIR /app
+
+# Build stage
+RUN apt-get update && apt-get install -y \
+    curl \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt requirements-dev.txt ./
-RUN pip install --no-cache-dir -r requirements.txt -r requirements-dev.txt
-COPY . .
-RUN pytest -q
+RUN pip install --no-cache-dir --user -r requirements.txt -r requirements-dev.txt
+
+FROM python:3.11-slim AS runtime
+WORKDIR /app
 
 # Runtime stage
-FROM python:3.11-slim
-WORKDIR /app
-RUN useradd -m appuser
-COPY --from=build /usr/local/lib/python3.11 /usr/local/lib/python3.11
-COPY --from=build /usr/local/bin /usr/local/bin
-COPY . .
-EXPOSE 8000
-HEALTHCHECK CMD curl -f http://localhost:8000/health || exit 1
+RUN groupadd -r appuser && useradd -r -g appuser appuser && \
+    apt-get update && apt-get install -y curl && \
+    rm -rf /var/lib/apt/lists/*
+
+COPY --from=builder /root/.local /home/appuser/.local
+COPY --chown=appuser:appuser . .
+
+RUN chmod -R 755 /home/appuser && \
+    find /home/appuser/.local -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+
 USER appuser
+ENV PATH="/home/appuser/.local/bin:${PATH}"
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONPATH=/app
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+EXPOSE 8000
+
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -107,14 +107,56 @@ jobs:
         path: feature-votes.tar
         retention-days: 7
 
-  # C5: Эмуляция CD/промоушн
+  # C5: Деплой в разные environments
+  deploy-development:
+    name: Deploy to Development
+    runs-on: ubuntu-latest
+    needs: [test, docker-build]
+    environment: development
+    if: github.ref == 'refs/heads/p08-ci-cd'  # только для feature branch
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download Docker image
+      uses: actions/download-artifact@v4
+      with:
+        name: docker-image
+
+    - name: Load Docker image
+      run: docker load -i feature-votes.tar
+
+    - name: Deploy to development (mock)
+      env:
+        DB_URL: ${{ secrets.DB_URL }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      run: |
+        echo "Deploying to DEVELOPMENT environment"
+        echo "Using database: $DB_URL"
+        echo "Branch: ${{ github.ref }}"
+        echo "Deployment completed successfully"
+
+        mkdir -p deployment-reports
+        echo "Environment: development" > deployment-reports/deploy.txt
+        echo "Deployment Time: $(date)" >> deployment-reports/deploy.txt
+        echo "Image: feature-votes:latest" >> deployment-reports/deploy.txt
+        echo "Branch: ${{ github.ref }}" >> deployment-reports/deploy.txt
+        echo "Status: SUCCESS" >> deployment-reports/deploy.txt
+
+    - name: Upload deployment report
+      uses: actions/upload-artifact@v4
+      with:
+        name: development-deployment-report
+        path: deployment-reports/
+        retention-days: 30
+
   deploy-staging:
     name: Deploy to Staging
     runs-on: ubuntu-latest
     needs: [test, docker-build]
     environment: staging
+    if: github.ref == 'refs/heads/main'  # только для main branch
 
-    # C3: Использование секретов для окружения
     steps:
     - uses: actions/checkout@v4
 
@@ -128,24 +170,67 @@ jobs:
 
     - name: Deploy to staging (mock)
       env:
-        # C3: Секреты для разных окружений
-        STAGING_DB_URL: ${{ secrets.STAGING_DB_URL }}
+        DB_URL: ${{ secrets.DB_URL }}
         JWT_SECRET: ${{ secrets.JWT_SECRET }}
       run: |
-        echo " Deploying to staging environment"
-        echo "Using database: $STAGING_DB_URL"
+        echo "Deploying to STAGING environment"
+        echo "Using database: $DB_URL"
+        echo "Branch: ${{ github.ref }}"
         echo "Deployment completed successfully"
 
-        # Эмуляция деплоя - создаем тестовый отчет
         mkdir -p deployment-reports
-        echo "Deployment Time: $(date)" > deployment-reports/staging-deploy.txt
-        echo "Image: feature-votes:latest" >> deployment-reports/staging-deploy.txt
-        echo "Status: SUCCESS" >> deployment-reports/staging-deploy.txt
+        echo "Environment: staging" > deployment-reports/deploy.txt
+        echo "Deployment Time: $(date)" >> deployment-reports/deploy.txt
+        echo "Image: feature-votes:latest" >> deployment-reports/deploy.txt
+        echo "Branch: ${{ github.ref }}" >> deployment-reports/deploy.txt
+        echo "Status: SUCCESS" >> deployment-reports/deploy.txt
 
     - name: Upload deployment report
       uses: actions/upload-artifact@v4
       with:
         name: staging-deployment-report
+        path: deployment-reports/
+        retention-days: 30
+
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [test, docker-build]
+    environment: production
+    if: github.ref == 'refs/heads/production'  # только для production branch
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download Docker image
+      uses: actions/download-artifact@v4
+      with:
+        name: docker-image
+
+    - name: Load Docker image
+      run: docker load -i feature-votes.tar
+
+    - name: Deploy to production (mock)
+      env:
+        DB_URL: ${{ secrets.DB_URL }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      run: |
+        echo "Deploying to PRODUCTION environment"
+        echo "Using database: $DB_URL"
+        echo "Branch: ${{ github.ref }}"
+        echo "Deployment completed successfully"
+
+        mkdir -p deployment-reports
+        echo "Environment: production" > deployment-reports/deploy.txt
+        echo "Deployment Time: $(date)" >> deployment-reports/deploy.txt
+        echo "Image: feature-votes:latest" >> deployment-reports/deploy.txt
+        echo "Branch: ${{ github.ref }}" >> deployment-reports/deploy.txt
+        echo "Status: SUCCESS" >> deployment-reports/deploy.txt
+
+    - name: Upload deployment report
+      uses: actions/upload-artifact@v4
+      with:
+        name: production-deployment-report
         path: deployment-reports/
         retention-days: 30
 

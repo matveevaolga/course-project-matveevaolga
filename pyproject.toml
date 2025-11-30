@@ -1,9 +1,44 @@
 [tool.ruff]
 line-length = 100
-lint.select = ["E","F","W","I"]
+lint.select = ["E", "F", "W", "I"]
 target-version = "py311"
-exclude = ["venv",".venv","build","dist"]
+exclude = ["venv", ".venv", "build", "dist"]
 
 [tool.isort]
 profile = "black"
 line_length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --strict-markers --strict-config"
+markers = [
+    "slow: slow tests",
+    "integration: integration tests"
+]
+
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/venv/*",
+    "*/.venv/*"
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\b:",
+    "@(abc\\.)?abstractmethod"
+]

@@ -38,6 +38,24 @@ docker run --rm -p 8000:8000 feature-votes
 docker compose up --build
 ```
 
+### Безопасность
+- Read-only файловая система
+- Health checks
+- Security hardening (no-new-privileges)
+- Multi-stage build для минимального размера образа
+- Запуск под non-root пользователем
+
+### Запуск
+```bash
+# Базовый запуск
+docker compose up --build
+
+# Полный стек (БД + Redis)
+docker compose --profile full up --build
+
+# Проверка здоровья
+curl http://localhost:8000/health
+
 ## Эндпойнты
 ### default
 - `GET /health` → `{"status": "ok"}`

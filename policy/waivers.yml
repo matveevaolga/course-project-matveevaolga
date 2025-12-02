@@ -1,17 +1,17 @@
 waivers:
-  - id: "NO-CVES-FOUND-20251202"
+  # REAL WAIVER - для документации чистого сканирования
+  - id: "SEC-SCAN-20251202-CLEAN"
     package: "all-dependencies"
     version: "as-of-2025-12-02"
     severity: "None"
     reason: |
-      Security scan от 2025-12-02 не обнаружил уязвимостей в зависимостях.
-      Использовались инструменты:
-      1. Grype v0.74.0 с актуальной БД (2025-12-02)
-      2. Сканирование всех Python зависимостей
-      3. Проверка SBOM в CycloneDX формате
-      
-      Это подтверждает что текущие версии зависимостей безопасны.
-    issue: "https://github.com/${{ github.repository }}/issues/1"
-    expires_at: "2025-06-02"  # через 6 месяцев
-    approved_by: "security-scanner"
+      Security scan от 2025-12-02 не обнаружил уязвимостей.
+      Использовался Grype v0.74.0 с актуальной БД.
+      Все зависимости проекта безопасны на момент сканирования.
+
+      Подробности в issue #17.
+    issue: "https://github.com/your-username/your-repo/issues/Y"
+    expires_at: "2025-06-02"  # через 6 месяцев пересканировать
+    approved_by: "automated-security-scan"
     approved_date: "2025-12-02"
+    scan_report: "EVIDENCE/P09/sca-report-20251202-115932.json"

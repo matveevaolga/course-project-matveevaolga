@@ -46,22 +46,22 @@ paths = [
 [[allowlist]]
 description = "Example secrets in documentation"
 regexes = [
-  '''example[_-]?key''',
-  '''test[_-]?secret''',
-  '''demo[_-]?password''',
-  '''sample[_-]?token''',
-  '''placeholder[_-]?credential'''
+  "example[_-]?key",
+  "test[_-]?secret",
+  "demo[_-]?password",
+  "sample[_-]?token",
+  "placeholder[_-]?credential"
 ]
 
 [[allowlist]]
 description = "Common false positives"
 regexes = [
-  '''BEGIN RSA PRIVATE KEY''',
-  '''-----BEGIN.*-----''',
-  '''localhost''',
-  '''127\.0\.0\.1''',
-  '''0\.0\.0\.0''',
-  '''postgresql://.*:.*@localhost'''
+  "BEGIN RSA PRIVATE KEY",
+  "-----BEGIN.*-----",
+  "localhost",
+  "127\\.0\\.0\\.1",
+  "0\\.0\\.0\\.0",
+  "postgresql://.*:.*@localhost"
 ]
 
 [[rules]]

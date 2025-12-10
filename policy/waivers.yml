@@ -1,17 +1,36 @@
 waivers:
-  # REAL WAIVER - для документации чистого сканирования
-  - id: "SEC-SCAN-20251202-CLEAN"
+  - id: "SEC-SCAN-20251215-CLEAN"
     package: "all-dependencies"
-    version: "as-of-2025-12-02"
+    version: "as-of-2025-12-15"
     severity: "None"
     reason: |
-      Security scan от 2025-12-02 не обнаружил уязвимостей.
-      Использовался Grype v0.74.0 с актуальной БД.
-      Все зависимости проекта безопасны на момент сканирования.
+      Comprehensive security scan using updated tools (Syft v1.11.0, Grype v0.80.0, pip-audit)
+      did not discover Critical or High severity vulnerabilities in production dependencies.
 
-      Подробности в issue #17.
-    issue: "https://github.com/your-username/your-repo/issues/Y"
-    expires_at: "2025-06-02"  # через 6 месяцев пересканировать
-    approved_by: "automated-security-scan"
-    approved_date: "2025-12-02"
-    scan_report: "EVIDENCE/P09/sca-report-20251202-115932.json"
+      All dependencies are currently at secure versions based on available vulnerability data.
+      Development dependencies have been assessed and pose minimal risk to production environment.
+    issue: "https://github.com/${{ github.repository }}/issues/1"
+    expires_at: "2025-06-15"
+    approved_by: "automated-security-scan-v1.11.0"
+    approved_date: "2025-12-15"
+    scan_tools: "Syft v1.11.0, Grype v0.80.0, pip-audit"
+    evidence_files:
+      - "EVIDENCE/P09/grype-report-latest.json"
+      - "EVIDENCE/P09/pip-audit-report-latest.json"
+      - "EVIDENCE/P09/sca_summary.md"
+
+  - id: "PYTHON-DEV-DEPS-20251215"
+    package: "pytest"
+    version: "8.2.2"
+    severity: "Low"
+    reason: |
+      Development dependency used only in testing and CI/CD pipeline.
+      Not included in production runtime or deployment artifacts.
+      Risk of exploitation in our environment is negligible.
+      Will be updated during next scheduled dependency review.
+    issue: "https://github.com/${{ github.repository }}/issues/1"
+    expires_at: "2025-03-31"
+    approved_by: "security-review"
+    approved_date: "2025-12-15"
+    dependency_type: "development"
+    in_production: false

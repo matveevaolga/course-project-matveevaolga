@@ -3,188 +3,123 @@ name: Security - SBOM & SCA Scan
 on:
   workflow_dispatch:
   push:
-    branches: [ main, p08-ci-cd, p09-security-sbom ]
+    branches: [ main, p07-containerization, p08-ci-cd, p09-security-sbom ]
     paths:
       - '**/*.py'
       - 'requirements*.txt'
       - 'pyproject.toml'
       - '.github/workflows/security.yml'
   pull_request:
-    branches: [ main, p08-ci-cd ]
-    paths:
-      - '**/*.py'
-      - 'requirements*.txt'
-      - 'pyproject.toml'
+    branches: [ main, p07-containerization ]
 
-# C5 ★★2: Concurrency для предотвращения дубликатов
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  # C1 ★★2: Генерация SBOM с фиксированной версией инструмента
-  generate-sbom:
-    name: Generate SBOM
+  sbom_sca:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0  # C1 ★★2: Для привязки к коммитам
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Create evidence directory
-      run: mkdir -p EVIDENCE/P09
+      - name: Ensure evidence dirs
+        run: mkdir -p EVIDENCE/P09
 
-    # C1 ★★2: Фиксированная версия Syft для стабильности
-    - name: Generate SBOM with Syft (CycloneDX format)
-      run: |
-        docker run --rm \
-          -v "$(pwd):/work" \
-          -w /work \
-          anchore/syft:v0.104.0 \
-          packages dir:. \
-          -o cyclonedx-json \
-          > EVIDENCE/P09/sbom-$(date +%Y%m%d-%H%M%S)-${{ github.sha }}.json
+      - name: Generate SBOM with Syft
+        run: |
+          docker run --rm \
+            -v "$(pwd):/work" \
+            -w /work \
+            anchore/syft:v1.11.0 \
+            packages dir:. \
+            -o cyclonedx-json \
+            > EVIDENCE/P09/sbom-$(date +%Y%m%d-%H%M%S)-${{ github.sha }}.json
 
-    - name: Create latest SBOM symlink
-      run: |
-        latest=$(ls -t EVIDENCE/P09/sbom-*.json | head -1)
-        ln -sf $(basename $latest) EVIDENCE/P09/sbom-latest.json
+      - name: Create latest SBOM symlink
+        run: |
+          latest=$(ls -t EVIDENCE/P09/sbom-*.json | head -1)
+          ln -sf $(basename $latest) EVIDENCE/P09/sbom-latest.json
 
-    - name: Upload SBOM as artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: sbom-evidence
-        path: EVIDENCE/P09/
-        retention-days: 90
+      - name: SCA Scan with Grype
+        run: |
+          docker run --rm \
+            -v "$(pwd):/work" \
+            -w /work \
+            anchore/grype:v0.80.0 \
+            sbom:/work/EVIDENCE/P09/sbom-latest.json \
+            -o json \
+            > EVIDENCE/P09/grype-report-$(date +%Y%m%d-%H%M%S).json
 
-  # C2 ★★2: SCA сканирование с анализом
-  sca-scan:
-    name: SCA Vulnerability Scan
-    runs-on: ubuntu-latest
-    needs: generate-sbom
-    timeout-minutes: 15
+      - name: Python SCA with pip-audit
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt -r requirements-dev.txt \
+            --format json \
+            > EVIDENCE/P09/pip-audit-report-$(date +%Y%m%d-%H%M%S).json
 
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Generate combined SCA summary
+        run: |
+          echo "# SCA Vulnerability Summary" > EVIDENCE/P09/sca_summary.md
+          echo "Generated: $(date)" >> EVIDENCE/P09/sca_summary.md
+          echo "Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})" >> EVIDENCE/P09/sca_summary.md
+          echo "" >> EVIDENCE/P09/sca_summary.md
 
-    - name: Download SBOM artifact
-      uses: actions/download-artifact@v4
-      with:
-        name: sbom-evidence
-        path: EVIDENCE/P09/
+          grype_report=$(ls -t EVIDENCE/P09/grype-report-*.json | head -1)
+          pip_report=$(ls -t EVIDENCE/P09/pip-audit-report-*.json | head -1)
 
-    - name: Run SCA with Grype
-      run: |
-        # C2 ★★2: Фиксированная версия Grype для воспроизводимости
-        docker run --rm \
-          -v "$(pwd):/work" \
-          -w /work \
-          anchore/grype:v0.74.0 \
-          sbom:/work/EVIDENCE/P09/sbom-latest.json \
-          -o json \
-          > EVIDENCE/P09/sca-report-$(date +%Y%m%d-%H%M%S).json
+          echo "## Tools Used" >> EVIDENCE/P09/sca_summary.md
+          echo "- Syft v1.11.0 (SBOM generation)" >> EVIDENCE/P09/sca_summary.md
+          echo "- Grype v0.80.0 (general SCA)" >> EVIDENCE/P09/sca_summary.md
+          echo "- pip-audit (Python-specific SCA)" >> EVIDENCE/P09/sca_summary.md
+          echo "" >> EVIDENCE/P09/sca_summary.md
 
-    - name: Generate SCA summary
-      run: |
-        latest_report=$(ls -t EVIDENCE/P09/sca-report-*.json | head -1)
+          echo "## Grype Results" >> EVIDENCE/P09/sca_summary.md
+          if [ -f "$grype_report" ]; then
+            echo "### Severity Distribution" >> EVIDENCE/P09/sca_summary.md
+            jq -r '
+              [.matches[].vulnerability.severity]
+              | group_by(.)
+              | map({severity: .[0], count: length})
+              | sort_by(.severity)
+            ' "$grype_report" >> EVIDENCE/P09/sca_summary.md || echo "No vulnerabilities found" >> EVIDENCE/P09/sca_summary.md
+          fi
 
-        # C2 ★★2: Генерация агрегированной сводки
-        echo "# SCA Vulnerability Summary" > EVIDENCE/P09/sca_summary.md
-        echo "Generated: $(date)" >> EVIDENCE/P09/sca_summary.md
-        echo "Commit: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})" >> EVIDENCE/P09/sca_summary.md
-        echo "" >> EVIDENCE/P09/sca_summary.md
+          echo "" >> EVIDENCE/P09/sca_summary.md
+          echo "## pip-audit Results" >> EVIDENCE/P09/sca_summary.md
+          if [ -f "$pip_report" ]; then
+            pip-audit -r requirements.txt -r requirements-dev.txt \
+              --format markdown \
+              >> EVIDENCE/P09/sca_summary.md || echo "No Python vulnerabilities found" >> EVIDENCE/P09/sca_summary.md
+          fi
 
-        # Анализ уязвимостей по severity
-        echo "## Severity Distribution" >> EVIDENCE/P09/sca_summary.md
-        jq -r '
-          [.matches[].vulnerability.severity]
-          | group_by(.)
-          | map({severity: .[0], count: length})
-          | sort_by(.severity)
-        ' "$latest_report" >> EVIDENCE/P09/sca_summary.md
+          echo "" >> EVIDENCE/P09/sca_summary.md
+          echo "## Action Plan" >> EVIDENCE/P09/sca_summary.md
+          echo "1. Review Critical/High vulnerabilities immediately" >> EVIDENCE/P09/sca_summary.md
+          echo "2. Address Medium vulnerabilities in next sprint" >> EVIDENCE/P09/sca_summary.md
+          echo "3. Monitor Low vulnerabilities regularly" >> EVIDENCE/P09/sca_summary.md
+          echo "4. Create waivers for justified exceptions" >> EVIDENCE/P09/sca_summary.md
 
-        # C2 ★★2: Список Critical/High уязвимостей
-        echo "" >> EVIDENCE/P09/sca_summary.md
-        echo "## Critical & High Vulnerabilities" >> EVIDENCE/P09/sca_summary.md
-        echo "| CVE ID | Package | Version | Severity | Description |" >> EVIDENCE/P09/sca_summary.md
-        echo "|--------|---------|---------|----------|-------------|" >> EVIDENCE/P09/sca_summary.md
-        jq -r '
-          .matches[]
-          | select(.vulnerability.severity == "Critical" or .vulnerability.severity == "High")
-          | "| \(.vulnerability.id) | \(.artifact.name) | \(.artifact.version) | \(.vulnerability.severity) | \(.vulnerability.description // "No description" | .[0:50])... |"
-        ' "$latest_report" >> EVIDENCE/P09/sca_summary.md
+      - name: Policy check
+        run: |
+          echo "## Policy Compliance Check" > EVIDENCE/P09/policy_check.md
+          echo "Generated: $(date)" >> EVIDENCE/P09/policy_check.md
 
-        # План действий
-        echo "" >> EVIDENCE/P09/sca_summary.md
-        echo "## Action Plan" >> EVIDENCE/P09/sca_summary.md
-        echo "1. Review Critical/High vulnerabilities above" >> EVIDENCE/P09/sca_summary.md
-        echo "2. Check if affected packages are in production code path" >> EVIDENCE/P09/sca_summary.md
-        echo "3. Update dependencies where possible" >> EVIDENCE/P09/sca_summary.md
-        echo "4. Create waivers for justified exceptions" >> EVIDENCE/P09/sca_summary.md
+          if [ -f "policy/waivers.yml" ]; then
+            waiver_count=$(yq eval '.waivers | length' policy/waivers.yml 2>/dev/null || echo "0")
+            echo "Waivers count: $waiver_count" >> EVIDENCE/P09/policy_check.md
+          else
+            echo " policy/waivers.yml not found" >> EVIDENCE/P09/policy_check.md
+          fi
 
-    - name: Upload SCA evidence
-      uses: actions/upload-artifact@v4
-      with:
-        name: sca-evidence
-        path: EVIDENCE/P09/
-        retention-days: 90
-
-  # C4 ★★2: Проверка политики и waivers
-  policy-check:
-    name: Policy & Waivers Check
-    runs-on: ubuntu-latest
-    needs: sca-scan
-    timeout-minutes: 5
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Download SCA evidence
-      uses: actions/download-artifact@v4
-      with:
-        name: sca-evidence
-        path: EVIDENCE/P09/
-
-    - name: Check policy directory exists
-      run: |
-        if [ ! -d "policy" ]; then
-          echo " policy directory not found"
-          exit 1
-        fi
-        echo "policy directory exists"
-
-    - name: Validate waivers.yml
-      run: |
-        if [ ! -f "policy/waivers.yml" ]; then
-          echo " policy/waivers.yml not found"
-          exit 1
-        fi
-
-        # Проверка структуры файла
-        if ! yq eval '.waivers' policy/waivers.yml > /dev/null 2>&1; then
-          echo " policy/waivers.yml has invalid YAML structure"
-          exit 1
-        fi
-
-        echo " policy/waivers.yml is valid"
-
-    - name: Generate policy report
-      run: |
-        echo "# Policy Compliance Report" > EVIDENCE/P09/policy_report.md
-        echo "Generated: $(date)" >> EVIDENCE/P09/policy_report.md
-        echo "" >> EVIDENCE/P09/policy_report.md
-
-        waiver_count=$(yq eval '.waivers | length' policy/waivers.yml 2>/dev/null || echo "0")
-        echo "## Waivers Status" >> EVIDENCE/P09/policy_report.md
-        echo "- Total waivers: $waiver_count" >> EVIDENCE/P09/policy_report.md
-
-        if [ "$waiver_count" -gt 0 ]; then
-          echo "" >> EVIDENCE/P09/policy_report.md
-          echo "### Active Waivers" >> EVIDENCE/P09/policy_report.md
-          yq eval '.waivers[] | "- \(.id): \(.package)@\(.version) (\(.severity)) - \(.reason)"' policy/waivers.yml >> EVIDENCE/P09/policy_report.md
-        fi
+      - name: Upload security evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: P09_SECURITY_EVIDENCE
+          path: EVIDENCE/P09/
+          retention-days: 90

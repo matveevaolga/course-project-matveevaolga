@@ -1,3 +1,5 @@
+# Создайте новый файл с правильной конфигурацией
+cat > .gitleaks.toml << 'EOF'
 title = "Gitleaks configuration for Feature Votes API"
 version = "8.18.1"
 
@@ -46,45 +48,46 @@ paths = [
 [[allowlist]]
 description = "Example secrets in documentation"
 regexes = [
-  '''example[_-]?key''',
-  '''test[_-]?secret''',
-  '''demo[_-]?password''',
-  '''sample[_-]?token''',
-  '''placeholder[_-]?credential'''
+  "example[_-]?key",
+  "test[_-]?secret",
+  "demo[_-]?password",
+  "sample[_-]?token",
+  "placeholder[_-]?credential"
 ]
 
 [[allowlist]]
 description = "Common false positives"
 regexes = [
-  '''BEGIN RSA PRIVATE KEY''',
-  '''-----BEGIN.*-----''',
-  '''localhost''',
-  '''127\.0\.0\.1''',
-  '''0\.0\.0\.0''',
-  '''postgresql://.*:.*@localhost'''
+  "BEGIN RSA PRIVATE KEY",
+  "-----BEGIN.*-----",
+  "localhost",
+  "127\\.0\\.0\\.1",
+  "0\\.0\\.0\\.0",
+  "postgresql://.*:.*@localhost"
 ]
 
 [[rules]]
 id = "generic-api-key"
 description = "Generic API key pattern"
-regex = '''(?i)(?:api[_-]?key|secret[_-]?key|access[_-]?key)[=:]\s*['\"]?([a-zA-Z0-9]{32,})['\"]?'''
+regex = "(?i)(?:api[_-]?key|secret[_-]?key|access[_-]?key)[=:]\\s*['\"]?([a-zA-Z0-9]{32,})['\"]?"
 entropy = 3.5
 tags = ["key", "api", "secret"]
 
 [[rules]]
 id = "jwt-token"
 description = "JWT token pattern"
-regex = '''eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}'''
+regex = "eyJ[a-zA-Z0-9_-]{10,}\\.[a-zA-Z0-9_-]{10,}\\.[a-zA-Z0-9_-]{10,}"
 tags = ["jwt", "token", "auth"]
 
 [[rules]]
 id = "aws-access-key"
 description = "AWS Access Key ID"
-regex = '''(?i)AKIA[0-9A-Z]{16}'''
+regex = "(?i)AKIA[0-9A-Z]{16}"
 tags = ["aws", "key", "cloud"]
 
 [[rules]]
 id = "password-in-code"
 description = "Password assignment in code"
-regex = '''(?i)(?:password|passwd|pwd)[\s]*=[\s]*['\"][^'\"]{6,}['\"]'''
+regex = "(?i)(?:password|passwd|pwd)[\\s]*=[\\s]*['\"][^'\"]{6,}['\"]"
 tags = ["password", "credential"]
+EOF

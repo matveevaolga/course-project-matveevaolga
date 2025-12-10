@@ -40,4 +40,3 @@ regex = '''-----BEGIN SSH2 ENCRYPTED PRIVATE KEY-----'''
 id = "pgp-private-key-block"
 description = "PGP private key block"
 regex = '''-----BEGIN PGP PRIVATE KEY BLOCK-----'''
-EOF

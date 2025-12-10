@@ -1,90 +1,43 @@
 title = "Gitleaks configuration for Feature Votes API"
 version = "8.18.1"
 
-[general]
-regexMaxDepth = 1000
-maxTargetMegabytes = 20
-
-[[allowlist]]
-description = "Документация и примеры"
-paths = [
-  "README.md",
-  "docs/**",
-  "examples/**",
-  "*.example",
-  "*.template"
-]
-
-[[allowlist]]
-description = "Тестовые файлы"
-paths = [
-  "tests/**",
-  "**/test_*.py",
-  "**/*_test.py"
-]
-
-[[allowlist]]
-description = "Конфигурационные файлы"
-paths = [
-  "pyproject.toml",
-  "requirements*.txt",
-  ".github/**",
-  "Dockerfile"
-]
-
-[[allowlist]]
-description = "Генерируемые файлы"
-paths = [
-  "**/__pycache__/**",
-  "*.pyc",
-  "*.pyo",
-  ".coverage",
-  "htmlcov/**",
-  "*.log"
-]
-
-[[allowlist]]
-description = "Example secrets in documentation"
-regexes = [
-  "example[_-]?key",
-  "test[_-]?secret",
-  "demo[_-]?password",
-  "sample[_-]?token",
-  "placeholder[_-]?credential"
-]
-
-[[allowlist]]
-description = "Common false positives"
-regexes = [
-  "BEGIN RSA PRIVATE KEY",
-  "-----BEGIN.*-----",
-  "localhost",
-  "127\\.0\\.0\\.1",
-  "0\\.0\\.0\\.0",
-  "postgresql://.*:.*@localhost"
-]
-
 [[rules]]
-id = "generic-api-key"
-description = "Generic API key pattern"
-regex = '''(?i)(?:api[_-]?key|secret[_-]?key|access[_-]?key)[=:]\s*['\"]?([a-zA-Z0-9]{32,})['\"]?'''
-entropy = 3.5
-tags = ["key", "api", "secret"]
-
-[[rules]]
-id = "jwt-token"
-description = "JWT token pattern"
-regex = '''eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}'''
-tags = ["jwt", "token", "auth"]
-
-[[rules]]
-id = "aws-access-key"
+id = "aws-access-key-id"
 description = "AWS Access Key ID"
-regex = '''(?i)AKIA[0-9A-Z]{16}'''
-tags = ["aws", "key", "cloud"]
+regex = '''AKIA[0-9A-Z]{16}'''
 
 [[rules]]
-id = "password-in-code"
-description = "Password assignment in code"
-regex = '''(?i)(?:password|passwd|pwd)[\s]*=[\s]*['\"][^'\"]{6,}['\"]'''
-tags = ["password", "credential"]
+id = "aws-secret-access-key"
+description = "AWS Secret Access Key"
+regex = '''(?i)aws(.{0,20})?['\"][0-9a-zA-Z\/+]{40}['\"]'''
+
+[[rules]]
+id = "ssh-dsa-private-key"
+description = "SSH (DSA) private key"
+regex = '''-----BEGIN DSA PRIVATE KEY-----'''
+
+[[rules]]
+id = "ssh-ec-private-key"
+description = "SSH (EC) private key"
+regex = '''-----BEGIN EC PRIVATE KEY-----'''
+
+[[rules]]
+id = "ssh-rsa-private-key"
+description = "SSH (RSA) private key"
+regex = '''-----BEGIN RSA PRIVATE KEY-----'''
+
+[[rules]]
+id = "pkcs8-private-key"
+description = "PKCS8 private key"
+regex = '''-----BEGIN PRIVATE KEY-----'''
+
+[[rules]]
+id = "putty-private-key"
+description = "PuTTY private key"
+regex = '''-----BEGIN SSH2 ENCRYPTED PRIVATE KEY-----'''
+
+[[rules]]
+id = "pgp-private-key-block"
+description = "PGP private key block"
+regex = '''-----BEGIN PGP PRIVATE KEY BLOCK-----'''
+EOF

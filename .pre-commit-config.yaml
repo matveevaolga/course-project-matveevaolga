@@ -45,3 +45,21 @@ repos:
     hooks:
       - id: gitleaks
         args: ['--config=security/.gitleaks.toml', '--verbose']
+
+  - repo: local
+    hooks:
+      - id: pytest-check
+        name: pytest quick check
+        entry: pytest -q --tb=short
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [push]
+
+      - id: bandit-check
+        name: bandit security scan
+        entry: bandit -r app/ -q
+        language: system
+        pass_filenames: false
+        always_run: false
+        stages: [push]

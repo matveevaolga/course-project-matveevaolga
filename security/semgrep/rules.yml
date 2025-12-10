@@ -9,7 +9,7 @@ rules:
     metadata:
       category: "security"
       technology: ["fastapi", "python"]
-    
+
   - id: "insecure-deserialization"
     patterns:
       - pattern: "pickle.loads(...)"
@@ -19,7 +19,7 @@ rules:
     metadata:
       category: "security"
       cwe: ["CWE-502"]
-    
+
   - id: "sql-injection-risk"
     patterns:
       - pattern: |
@@ -34,7 +34,7 @@ rules:
     metadata:
       category: "security"
       cwe: ["CWE-89"]
-    
+
   - id: "debug-mode-production"
     patterns:
       - pattern: "debug=True"
@@ -44,7 +44,7 @@ rules:
     severity: WARNING
     metadata:
       category: "best-practices"
-    
+
   - id: "insecure-random"
     patterns:
       - pattern: "random.randint(...)"
@@ -55,7 +55,7 @@ rules:
     metadata:
       category: "security"
       cwe: ["CWE-338"]
-    
+
   - id: "hardcoded-credentials"
     patterns:
       - pattern: |

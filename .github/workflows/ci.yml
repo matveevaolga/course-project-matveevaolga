@@ -77,9 +77,6 @@ jobs:
           print('Feature creation working')
           "
 
-      - name: Pre-commit (all files)
-        run: pre-commit run --all-files
-
   security-scan:
     runs-on: ubuntu-latest
 

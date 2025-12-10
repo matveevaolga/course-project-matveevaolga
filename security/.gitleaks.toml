@@ -8,11 +8,7 @@ paths = [
   "security/.gitleaks.toml",
   "pyproject.toml",
   "requirements*.txt",
-  ".github/**",
   "Dockerfile",
-  "tests/**",
-  "**/test_*.py",
-  "**/*_test.py"
 ]
 
 [[rules]]

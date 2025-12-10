@@ -1,0 +1,75 @@
+rules:
+  - id: "fastapi-hardcoded-secret"
+    patterns:
+      - pattern: "SECRET_KEY = ..."
+      - pattern-not: "SECRET_KEY = os.getenv(...)"
+    message: "Hardcoded secret detected. Use environment variables instead."
+    languages: [python]
+    severity: ERROR
+    metadata:
+      category: "security"
+      technology: ["fastapi", "python"]
+    
+  - id: "insecure-deserialization"
+    patterns:
+      - pattern: "pickle.loads(...)"
+    message: "Insecure deserialization with pickle detected. Use safer alternatives like json."
+    languages: [python]
+    severity: WARNING
+    metadata:
+      category: "security"
+      cwe: ["CWE-502"]
+    
+  - id: "sql-injection-risk"
+    patterns:
+      - pattern: |
+          f"SELECT ${{...}}"
+      - pattern: |
+          f'SELECT ${{...}}'
+      - pattern: |
+          "SELECT" + ... + "WHERE"
+    message: "Potential SQL injection risk. Use parameterized queries or ORM methods."
+    languages: [python]
+    severity: ERROR
+    metadata:
+      category: "security"
+      cwe: ["CWE-89"]
+    
+  - id: "debug-mode-production"
+    patterns:
+      - pattern: "debug=True"
+      - pattern-not: "debug=False"
+    message: "Debug mode enabled. Should be disabled in production environments."
+    languages: [python]
+    severity: WARNING
+    metadata:
+      category: "best-practices"
+    
+  - id: "insecure-random"
+    patterns:
+      - pattern: "random.randint(...)"
+      - pattern-not: "secrets.randbelow(...)"
+    message: "Insecure random number generation. Use secrets module for cryptographic operations."
+    languages: [python]
+    severity: WARNING
+    metadata:
+      category: "security"
+      cwe: ["CWE-338"]
+    
+  - id: "hardcoded-credentials"
+    patterns:
+      - pattern: |
+          password = $PASS
+          vars: [$PASS]
+      - pattern: |
+          passwd = $PASS
+          vars: [$PASS]
+      - pattern: |
+          pwd = $PASS
+          vars: [$PASS]
+    message: "Hardcoded password detected. Use environment variables or secret management."
+    languages: [python]
+    severity: ERROR
+    metadata:
+      category: "security"
+      cwe: ["CWE-798"]

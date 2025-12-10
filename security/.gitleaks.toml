@@ -1,0 +1,99 @@
+# Gitleaks configuration for Feature Votes API
+title = "Gitleaks Config"
+version = "8.18.1"
+
+# Общие настройки
+[general]
+regexMaxDepth = 1000
+maxTargetMegabytes = 20
+
+# Глобальные allowlist правила
+[allowlist]
+description = "Global allowlist rules"
+paths = [
+  # Документация и примеры
+  "README.md",
+  "docs/**",
+  "examples/**",
+  "*.example",
+  "*.template",
+  
+  # Тесты
+  "tests/**",
+  "**/test_*.py",
+  "**/*_test.py",
+  
+  # Конфигурационные файлы
+  "pyproject.toml",
+  "requirements*.txt",
+  ".github/**",
+  "Dockerfile",
+  
+  # Генерируемые файлы
+  "**/__pycache__/**",
+  "*.pyc",
+  "*.pyo",
+  ".coverage",
+  "htmlcov/**",
+  "*.log"
+]
+
+# Специфичные allowlist правила
+[[allowlist]]
+description = "Example secrets in documentation"
+regexes = [
+  '''example[_-]?key''',
+  '''test[_-]?secret''',
+  '''demo[_-]?password''',
+  '''sample[_-]?token''',
+  '''placeholder[_-]?credential'''
+]
+
+[[allowlist]]
+description = "Common false positives"
+regexes = [
+  '''BEGIN RSA PRIVATE KEY''', 
+  '''-----BEGIN.*-----''',  
+  '''localhost''',      
+  '''127\.0\.0\.1''',           
+  '''0\.0\.0\.0''',        
+  '''postgresql://.*:.*@localhost''', 
+]
+
+# Правила для обнаружения секретов
+[[rules]]
+id = "generic-api-key"
+description = "Generic API key pattern"
+regex = '''(?i)(?:api[_-]?key|secret[_-]?key|access[_-]?key)[=:]\s*['\"]?([a-zA-Z0-9]{32,})['\"]?'''
+entropy = 3.5
+tags = ["key", "api", "secret"]
+
+[[rules]]
+id = "jwt-token"
+description = "JWT token pattern"
+regex = '''eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}'''
+tags = ["jwt", "token", "auth"]
+
+[[rules]]
+id = "aws-access-key"
+description = "AWS Access Key ID"
+regex = '''(?i)AKIA[0-9A-Z]{16}'''
+tags = ["aws", "key", "cloud"]
+
+[[rules]]
+id = "private-key"
+description = "Private SSH/RSA key"
+regex = '''-----BEGIN [A-Z ]+ PRIVATE KEY-----'''
+tags = ["ssh", "rsa", "private-key"]
+
+[[rules]]
+id = "password-in-code"
+description = "Password assignment in code"
+regex = '''(?i)(?:password|passwd|pwd)[\s]*=[\s]*['\"][^'\"]{6,}['\"]'''
+tags = ["password", "credential"]
+
+[[rules]]
+id = "database-url"
+description = "Database connection string with credentials"
+regex = '''(?:postgresql|mysql|mongodb)://[^:]+:[^@]+@'''
+tags = ["database", "credentials", "connection-string"]

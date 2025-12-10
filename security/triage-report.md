@@ -31,3 +31,4 @@
 ### Backlog (1 month):
 - [ ] Implement custom Semgrep rules for FastAPI patterns
 - [ ] Schedule security training for team
+

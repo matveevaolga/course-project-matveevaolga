@@ -38,9 +38,7 @@ class FeatureStore:
         if feat_id in self.features:
             del self.features[feat_id]
             vote_ids_to_delete = [
-                vote_id
-                for vote_id, vote in self.votes.items()
-                if vote["feature_id"] == feat_id
+                vote_id for vote_id, vote in self.votes.items() if vote["feature_id"] == feat_id
             ]
             for vote_id in vote_ids_to_delete:
                 del self.votes[vote_id]

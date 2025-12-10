@@ -60,5 +60,5 @@ repos:
     rev: v8.18.1
     hooks:
       - id: gitleaks
-        args: ['--config=security/.gitleaks.toml', '--verbose', '--no-git']
-        pass_filenames: false
+        args: ['--config=security/.gitleaks.toml', '--verbose']
+

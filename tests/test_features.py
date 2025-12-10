@@ -31,9 +31,7 @@ def test_get_top_feats():
 
 
 def test_feature_votes_workflow():
-    create_resp = client.post(
-        "/features/", json={"title": "some feature", "desc": "some feature"}
-    )
+    create_resp = client.post("/features/", json={"title": "some feature", "desc": "some feature"})
     assert create_resp.status_code == 200
     feature_id = create_resp.json()["id"]
 

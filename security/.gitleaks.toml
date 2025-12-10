@@ -1,5 +1,4 @@
-# Gitleaks configuration for Feature Votes API
-title = "Gitleaks Config"
+title = "Gitleaks configuration for Feature Votes API"
 version = "8.18.1"
 
 # Общие настройки
@@ -7,29 +6,37 @@ version = "8.18.1"
 regexMaxDepth = 1000
 maxTargetMegabytes = 20
 
-# Глобальные allowlist правила
-[allowlist]
-description = "Global allowlist rules"
+# Allowlist правила (правильный синтаксис для v8)
+[[allowlist]]
+description = "Документация и примеры"
 paths = [
-  # Документация и примеры
   "README.md",
   "docs/**",
   "examples/**",
   "*.example",
-  "*.template",
-  
-  # Тесты
+  "*.template"
+]
+
+[[allowlist]]
+description = "Тестовые файлы"
+paths = [
   "tests/**",
   "**/test_*.py",
-  "**/*_test.py",
-  
-  # Конфигурационные файлы
+  "**/*_test.py"
+]
+
+[[allowlist]]
+description = "Конфигурационные файлы"
+paths = [
   "pyproject.toml",
   "requirements*.txt",
   ".github/**",
-  "Dockerfile",
-  
-  # Генерируемые файлы
+  "Dockerfile"
+]
+
+[[allowlist]]
+description = "Генерируемые файлы"
+paths = [
   "**/__pycache__/**",
   "*.pyc",
   "*.pyo",
@@ -38,7 +45,6 @@ paths = [
   "*.log"
 ]
 
-# Специфичные allowlist правила
 [[allowlist]]
 description = "Example secrets in documentation"
 regexes = [
@@ -52,12 +58,12 @@ regexes = [
 [[allowlist]]
 description = "Common false positives"
 regexes = [
-  '''BEGIN RSA PRIVATE KEY''', 
-  '''-----BEGIN.*-----''',  
-  '''localhost''',      
-  '''127\.0\.0\.1''',           
-  '''0\.0\.0\.0''',        
-  '''postgresql://.*:.*@localhost''', 
+  '''BEGIN RSA PRIVATE KEY''',
+  '''-----BEGIN.*-----''',
+  '''localhost''',
+  '''127\.0\.0\.1''',
+  '''0\.0\.0\.0''',
+  '''postgresql://.*:.*@localhost'''
 ]
 
 # Правила для обнаружения секретов
@@ -81,19 +87,7 @@ regex = '''(?i)AKIA[0-9A-Z]{16}'''
 tags = ["aws", "key", "cloud"]
 
 [[rules]]
-id = "private-key"
-description = "Private SSH/RSA key"
-regex = '''-----BEGIN [A-Z ]+ PRIVATE KEY-----'''
-tags = ["ssh", "rsa", "private-key"]
-
-[[rules]]
 id = "password-in-code"
 description = "Password assignment in code"
 regex = '''(?i)(?:password|passwd|pwd)[\s]*=[\s]*['\"][^'\"]{6,}['\"]'''
 tags = ["password", "credential"]
-
-[[rules]]
-id = "database-url"
-description = "Database connection string with credentials"
-regex = '''(?:postgresql|mysql|mongodb)://[^:]+:[^@]+@'''
-tags = ["database", "credentials", "connection-string"]

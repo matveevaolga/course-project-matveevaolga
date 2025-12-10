@@ -42,7 +42,9 @@ _db = {"items": []}
 @app.post("/items")
 def create_item(name: str):
     if not name or len(name) > 100:
-        raise AppError(code="validation_error", msg="name must be 1..100 chars", status=422)
+        raise AppError(
+            code="validation_error", msg="name must be 1..100 chars", status=422
+        )
     item = {"id": len(_db["items"]) + 1, "name": name}
     _db["items"].append(item)
     return item

@@ -1,12 +1,10 @@
 title = "Gitleaks configuration for Feature Votes API"
 version = "8.18.1"
 
-# Общие настройки
 [general]
 regexMaxDepth = 1000
 maxTargetMegabytes = 20
 
-# Allowlist правила (правильный синтаксис для v8)
 [[allowlist]]
 description = "Документация и примеры"
 paths = [
@@ -66,7 +64,6 @@ regexes = [
   '''postgresql://.*:.*@localhost'''
 ]
 
-# Правила для обнаружения секретов
 [[rules]]
 id = "generic-api-key"
 description = "Generic API key pattern"

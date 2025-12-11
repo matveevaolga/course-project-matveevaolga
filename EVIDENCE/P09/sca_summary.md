@@ -1,6 +1,6 @@
 # SCA Vulnerability Summary
-Generated: Wed Dec 10 18:56:23 UTC 2025
-Commit: [285211b0fe8fd66c965f7da29f3480aa9bf29cb5](https://github.com/matveevaolga/course-project-matveevaolga/commit/285211b0fe8fd66c965f7da29f3480aa9bf29cb5)
+Generated: Wed Dec 10 19:22:32 UTC 2025
+Commit: [233fdc88f75edef1d0f2129ad4185e49e036f3ac](https://github.com/matveevaolga/course-project-matveevaolga/commit/233fdc88f75edef1d0f2129ad4185e49e036f3ac)
 
 ## Critical Findings
 

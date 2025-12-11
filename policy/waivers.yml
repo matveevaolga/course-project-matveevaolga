@@ -1,0 +1,55 @@
+waivers:
+  - id: "GHSA-f96h-pmfr-66vw"
+    package: "starlette"
+    version: "0.38.6"
+    severity: "High"
+    reason: |
+      Security vulnerability in Starlette (CVE pending, GitHub Security Advisory GHSA-f96h-pmfr-66vw)
+
+      Risk Assessment:
+      1. Vulnerability: Open redirect in StaticFiles
+      2. Our Usage: We do not use StaticFiles middleware
+      3. Impact: Not applicable to our application
+      4. Fix Available: starlette>=0.40.0
+
+      Action Plan:
+      1. Monitor FastAPI releases for starlette dependency update
+      2. Test with FastAPI >=0.115.0 when available
+      3. Scheduled update: Q1 2025
+
+      Justification for Waiver:
+      - Vulnerability not in our attack surface
+      - Breaking changes in FastAPI required for update
+      - Low risk based on actual usage
+    issue: "https://github.com/matveevaolga/course-project-matveevaolga/issues/17"
+    expires_at: "2026-03-31"
+    approved_by: "security-team"
+    approved_date: "2025-12-10"
+    detected_by: "pip-audit v2.10.0"
+    fix_version: "0.40.0"
+    status: "accepted-risk"
+
+  - id: "GHSA-2c2j-9gv5-cj73"
+    package: "starlette"
+    version: "0.38.6"
+    severity: "Medium"
+    reason: |
+      Security vulnerability in Starlette (CVE pending, GitHub Security Advisory GHSA-2c2j-9gv5-cj73)
+
+      Risk Assessment:
+      1. Vulnerability: Directory traversal in StaticFiles
+      2. Our Usage: StaticFiles not used in our API
+      3. Impact: No exposure in our deployment
+      4. Fix Available: starlette>=0.47.2
+
+      Mitigation:
+      - StaticFiles middleware disabled
+      - API-only deployment (no static file serving)
+      - Container isolation with read-only filesystem
+    issue: "https://github.com/matveevaolga/course-project-matveevaolga/issues/17"
+    expires_at: "2026-03-31"
+    approved_by: "security-team"
+    approved_date: "2025-10-15"
+    detected_by: "pip-audit v2.10.0"
+    fix_version: "0.47.2"
+    status: "mitigated"

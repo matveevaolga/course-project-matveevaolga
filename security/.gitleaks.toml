@@ -1,0 +1,52 @@
+title = "Gitleaks configuration for Feature Votes API"
+version = "8.18.1"
+
+[allowlist]
+description = "Configuration files"
+paths = [
+  ".gitleaks.toml",
+  "security/.gitleaks.toml",
+  "pyproject.toml",
+  "requirements*.txt",
+  "Dockerfile",
+]
+
+[[rules]]
+id = "aws-access-key-id"
+description = "AWS Access Key ID"
+regex = '''AKIA[0-9A-Z]{16}'''
+
+[[rules]]
+id = "aws-secret-access-key"
+description = "AWS Secret Access Key"
+regex = '''(?i)aws(.{0,20})?['\"][0-9a-zA-Z\/+]{40}['\"]'''
+
+[[rules]]
+id = "ssh-dsa-private-key"
+description = "SSH (DSA) private key"
+regex = '''-----BEGIN DSA PRIVATE KEY-----'''
+
+[[rules]]
+id = "ssh-ec-private-key"
+description = "SSH (EC) private key"
+regex = '''-----BEGIN EC PRIVATE KEY-----'''
+
+[[rules]]
+id = "ssh-rsa-private-key"
+description = "SSH (RSA) private key"
+regex = '''-----BEGIN RSA PRIVATE KEY-----'''
+
+[[rules]]
+id = "pkcs8-private-key"
+description = "PKCS8 private key"
+regex = '''-----BEGIN PRIVATE KEY-----'''
+
+[[rules]]
+id = "putty-private-key"
+description = "PuTTY private key"
+regex = '''-----BEGIN SSH2 ENCRYPTED PRIVATE KEY-----'''
+
+[[rules]]
+id = "pgp-private-key-block"
+description = "PGP private key block"
+regex = '''-----BEGIN PGP PRIVATE KEY BLOCK-----'''

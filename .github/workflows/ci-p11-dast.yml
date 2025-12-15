@@ -73,8 +73,7 @@ jobs:
           -silent \
           -config api.disablekey=true \
           -quickurl http://localhost:8000 \
-          -quickout report.json \
-          -quickformat json
+          -quickout "${{ github.workspace }}/zap_report.json"
         
     - name: Save reports
       run: |

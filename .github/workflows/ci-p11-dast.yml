@@ -48,7 +48,7 @@ jobs:
         echo "Waiting for application to be ready..."
         for i in {1..30}; do
           if curl -s -f http://localhost:8000/health > /dev/null 2>&1; then
-            echo "Application is ready!"
+            echo " Application is ready!"
             break
           fi
           if [ $i -eq 30 ]; then
@@ -85,10 +85,10 @@ jobs:
         
         # Проверяем что отчет создан
         if [ -f "zap_report.html" ]; then
-          echo "Report generated successfully"
+          echo " Report generated successfully"
           ls -lh zap_report.html
         else
-          echo "No report generated"
+          echo " No report generated"
           exit 1
         fi
         
@@ -105,10 +105,12 @@ jobs:
           -quickformat json
           
         if [ -f "zap_report.json" ]; then
-          echo "JSON report generated"
+          echo " JSON report generated"
           # Показываем краткую статистику
-          python3 -c "
+          python3 << 'EOF'
 import json
+import sys
+
 try:
     with open('zap_report.json') as f:
         data = json.load(f)
@@ -136,7 +138,8 @@ try:
     
 except Exception as e:
     print(f'Error reading report: {e}')
-          "
+    sys.exit(1)
+EOF
         fi
         
     - name: Save reports to evidence directory
@@ -151,7 +154,7 @@ except Exception as e:
         
         if [ -f "zap_report.json" ]; then
           cp zap_report.json EVIDENCE/P11/zap_baseline.json
-          echo "JSON report saved"
+          echo " JSON report saved"
         fi
         
         # Создаем README с информацией

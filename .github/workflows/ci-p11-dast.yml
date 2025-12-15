@@ -108,8 +108,6 @@ jobs:
           echo " JSON report generated"
           # Показываем краткую статистику
           python3 << 'EOF'
-import json
-import sys
 
 try:
     with open('zap_report.json') as f:

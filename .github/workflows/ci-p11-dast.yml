@@ -137,43 +137,113 @@ jobs:
       run: |
         echo "Starting configured ZAP scan against http://$APP_IP:8000"
         
-        $ZAP_DIR/zap.sh -daemon -config api.disablekey=true -port 8090 &
+        # Запускаем ZAP как демон
+        echo "Starting ZAP daemon..."
+        $ZAP_DIR/zap.sh -daemon -config api.disablekey=true -port 8090 > zap.log 2>&1 &
         ZAP_PID=$!
-        sleep 10
         
-        pip install python-owasp-zap-v2.4
+        # Ждем пока ZAP запустится
+        echo "Waiting for ZAP to start..."
+        sleep 15
         
-        python zap_config.py
+        # Проверяем что ZAP запущен
+        if ! ps -p $ZAP_PID > /dev/null; then
+          echo "ZAP failed to start. Logs:"
+          cat zap.log
+          exit 1
+        fi
         
-        python -c "
-        from zapv2 import ZAPv2
+        echo "ZAP daemon started with PID: $ZAP_PID"
+        
+        # Устанавливаем python-owasp-zap-v2.4
+        pip install python-owasp-zap-v2.4 || pip install --break-system-packages python-owasp-zap-v2.4 || echo "Warning: Could not install python-owasp-zap-v2.4"
+        
+        # Создаем простой Python скрипт для сканирования
+        cat > zap_scan.py << 'PYEOF'
         import time
+        import sys
+        from zapv2 import ZAPv2
 
-        zap = ZAPv2(proxies={'http': 'http://127.0.0.1:8090', 'https': 'http://127.0.0.1:8090'})
+        target = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8000"
+        print(f"Starting ZAP scan for: {target}")
 
-        print('Starting spider scan...')
-        scan_id = zap.spider.scan('http://$APP_IP:8000', maxchildren=5, recurse=True)
-        while int(zap.spider.status(scan_id)) < 100:
-            print(f'Spider progress: {zap.spider.status(scan_id)}%')
-            time.sleep(2)
-
-        print('Starting active scan...')
-        ascan_id = zap.ascan.scan('http://$APP_IP:8000', recurse=True, inscopeonly=True)
-        while int(zap.ascan.status(ascan_id)) < 100:
-            print(f'Active scan progress: {zap.ascan.status(ascan_id)}%')
-            time.sleep(5)
-
-        print('Generating reports...')
-        with open('zap_baseline.html', 'w') as f:
-            f.write(zap.core.htmlreport())
-
-        with open('zap_baseline.json', 'w') as f:
-            f.write(zap.core.jsonreport())
-
-        print('Scan complete')
-        "
+        try:
+            # Подключаемся к ZAP
+            zap = ZAPv2(proxies={'http': 'http://127.0.0.1:8090', 'https': 'http://127.0.0.1:8090'})
+            print("Connected to ZAP API")
+            
+            # Запускаем spider
+            print("Starting spider scan...")
+            scan_id = zap.spider.scan(target, maxchildren=5, recurse=True)
+            
+            # Ждем завершения spider
+            while int(zap.spider.status(scan_id)) < 100:
+                progress = zap.spider.status(scan_id)
+                print(f"Spider progress: {progress}%")
+                time.sleep(2)
+            
+            print("Spider scan completed")
+            
+            # Запускаем active scan
+            print("Starting active scan...")
+            ascan_id = zap.ascan.scan(target, recurse=True, inscopeonly=True)
+            
+            # Ждем завершения active scan
+            while int(zap.ascan.status(ascan_id)) < 100:
+                progress = zap.ascan.status(ascan_id)
+                print(f"Active scan progress: {progress}%")
+                time.sleep(5)
+            
+            print("Active scan completed")
+            
+            # Генерируем отчеты
+            print("Generating reports...")
+            
+            html_report = zap.core.htmlreport()
+            with open('zap_baseline.html', 'w', encoding='utf-8') as f:
+                f.write(html_report)
+            
+            json_report = zap.core.jsonreport()
+            with open('zap_baseline.json', 'w', encoding='utf-8') as f:
+                f.write(json_report)
+            
+            print("Reports generated successfully")
+            
+        except Exception as e:
+            print(f"Error during ZAP scan: {str(e)}")
+            print(f"Error type: {type(e).__name__}")
+            import traceback
+            traceback.print_exc()
+            sys.exit(1)
+        PYEOF
         
-        kill $ZAP_PID
+        # Запускаем сканирование с таймаутом
+        echo "Running ZAP scan..."
+        timeout 600 python3 zap_scan.py "http://$APP_IP:8000"
+        SCAN_RESULT=$?
+        
+        # Останавливаем ZAP
+        echo "Stopping ZAP daemon..."
+        kill $ZAP_PID 2>/dev/null || true
+        sleep 5
+        
+        if [ $SCAN_RESULT -eq 0 ]; then
+          echo "ZAP scan completed successfully"
+        elif [ $SCAN_RESULT -eq 124 ]; then
+          echo "ZAP scan timed out after 10 minutes"
+          # Проверяем созданы ли отчеты
+          if [ -f "zap_baseline.html" ] && [ -f "zap_baseline.json" ]; then
+            echo "Reports were created before timeout"
+          else
+            echo "No reports created"
+            exit 1
+          fi
+        else
+          echo "ZAP scan failed with exit code: $SCAN_RESULT"
+          echo "ZAP logs:"
+          cat zap.log 2>/dev/null || echo "No ZAP logs available"
+          exit 1
+        fi
         
     - name: Generate P11 Analysis Report
       if: steps.start-app.outputs.app_ready == 'true'

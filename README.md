@@ -105,3 +105,33 @@ curl -X POST "http://localhost:8000/features/1/vote" \
 ```
 
 См. также: `SECURITY.md`, `.pre-commit-config.yaml`, `.github/workflows/ci.yml`.
+
+## DAST Security Scanning (P11)
+
+### ZAP Integration
+Проект интегрирован с OWASP ZAP для динамического тестирования безопасности:
+
+- **Workflow**: `.github/workflows/ci-p11-dast.yml`
+- **Триггеры**: ручной запуск, push в ветку P11, PR в main
+- **Конфигурация**: адаптирована под FastAPI (отключены нерелевантные проверки)
+- **Артефакты**: HTML и JSON отчёты сохраняются в `EVIDENCE/P11/`
+
+### Запуск сканирования
+Ручной запуск через GitHub Actions UI или создание PR в main.
+
+## Интерпретация результатов:
+
+### Отчёты содержат:
+Уровень риска (High/Medium/Low/Informational)
+
+Описание уязвимостей
+
+Рекомендации по исправлению
+
+### Критерии приёма рисков:
+
+High/Medium риски - требуют немедленного исправления
+
+Low риски - исправляются в течение спринта
+
+Informational - принимаются с обоснованием

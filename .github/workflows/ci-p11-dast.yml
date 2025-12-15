@@ -1,0 +1,220 @@
+name: P11 - DAST Security Scan with ZAP
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ p11-dast-integration ]
+    paths:
+      - 'app/**'
+      - '.github/workflows/ci-p11-dast.yml'
+      - 'requirements.txt'
+      - 'Dockerfile'
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  dast-scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Compose
+      run: |
+        docker compose version
+        
+    - name: Start application with Docker Compose
+      run: |
+        docker compose up -d app
+        echo "Waiting for application to be healthy..."
+        sleep 10
+        
+        for i in {1..15}; do
+          if docker compose ps app | grep -q "(healthy)"; then
+            echo "Application is healthy!"
+            break
+          fi
+          echo "Waiting for health check... ($i/15)"
+          sleep 3
+        done
+        
+        APP_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' feature-votes-app)
+        echo "APP_IP=$APP_IP" >> $GITHUB_ENV
+        
+    - name: Download and setup ZAP
+      run: |
+        ZAP_VERSION="2.15.0"
+        wget -q "https://github.com/zaproxy/zaproxy/releases/download/v${ZAP_VERSION}/ZAP_${ZAP_VERSION}_Linux.tar.gz"
+        tar -xzf "ZAP_${ZAP_VERSION}_Linux.tar.gz"
+        echo "ZAP_HOME=$(pwd)/ZAP_${ZAP_VERSION}" >> $GITHUB_ENV
+        
+    - name: Create ZAP configuration script
+      run: |
+        cat > zap_config.py << 'EOF'
+import time
+from zapv2 import ZAPv2
+
+zap = ZAPv2(proxies={'http': 'http://127.0.0.1:8080', 'https': 'http://127.0.0.1:8080'})
+
+print("Starting ZAP in daemon mode...")
+zap.core.new_session(name="feature-votes-scan", overwrite=True)
+
+print("Importing configuration...")
+zap.pscan.enable_all_scanners()
+zap.ascan.enable_all_scanners()
+
+disable_rules = [
+    10010, 10011, 10015, 10016, 10017, 10019, 10020, 10021,
+    10023, 10024, 10026, 10027, 10028, 10029, 10030, 10031,
+    10032, 10040, 10041, 10042, 10043, 10044, 10045, 10046,
+    10047, 10048, 10049, 10050, 10051, 10052, 10053, 10054,
+    10055, 10056, 10057, 10058, 10059, 10060, 10061, 10062,
+    10063, 10064, 10065, 10066, 10067, 10068, 10069, 10070
+]
+
+for rule_id in disable_rules:
+    try:
+        zap.ascan.disable_scanners(rule_id)
+        zap.pscan.disable_scanners(rule_id)
+    except:
+        pass
+
+print("Configuration complete")
+EOF
+        
+    - name: Run ZAP with custom configuration
+      run: |
+        $ZAP_HOME/zap.sh -daemon -config api.disablekey=true -port 8080 &
+        ZAP_PID=$!
+        sleep 10
+        
+        pip install python-owasp-zap-v2.4
+        
+        python zap_config.py
+        
+        echo "Starting scan against http://$APP_IP:8000"
+        
+        python -c "
+from zapv2 import ZAPv2
+import time
+
+zap = ZAPv2(proxies={'http': 'http://127.0.0.1:8080', 'https': 'http://127.0.0.1:8080'})
+
+print('Starting spider...')
+scan_id = zap.spider.scan('http://$APP_IP:8000', maxchildren=10, recurse=True)
+while int(zap.spider.status(scan_id)) < 100:
+    print(f'Spider progress: {zap.spider.status(scan_id)}%')
+    time.sleep(2)
+
+print('Starting active scan...')
+ascan_id = zap.ascan.scan('http://$APP_IP:8000', recurse=True, inscopeonly=True)
+while int(zap.ascan.status(ascan_id)) < 100:
+    print(f'Active scan progress: {zap.ascan.status(ascan_id)}%')
+    time.sleep(5)
+
+print('Generating reports...')
+with open('zap_report.html', 'w') as f:
+    f.write(zap.core.htmlreport())
+
+with open('zap_report.json', 'w') as f:
+    f.write(zap.core.jsonreport())
+
+print('Scan complete')
+"
+        
+        kill $ZAP_PID
+        wait $ZAP_PID
+        
+    - name: Generate summary and save evidence
+      run: |
+        mkdir -p EVIDENCE/P11
+        
+        if [ -f zap_report.html ]; then
+          cp zap_report.html EVIDENCE/P11/zap_baseline.html
+          echo "HTML report saved"
+        fi
+        
+        if [ -f zap_report.json ]; then
+          cp zap_report.json EVIDENCE/P11/zap_baseline.json
+          
+          python -c "
+import json
+import sys
+
+try:
+    with open('zap_report.json') as f:
+        data = json.load(f)
+    
+    summary = {'High': 0, 'Medium': 0, 'Low': 0, 'Informational': 0}
+    
+    for site in data.get('site', []):
+        for alert in site.get('alerts', []):
+            risk = alert.get('riskcode', '0')
+            if risk == '3':
+                summary['High'] += 1
+            elif risk == '2':
+                summary['Medium'] += 1
+            elif risk == '1':
+                summary['Low'] += 1
+            else:
+                summary['Informational'] += 1
+    
+    print(f'## Scan Summary')
+    print(f'High: {summary[\"High\"]}')
+    print(f'Medium: {summary[\"Medium\"]}')
+    print(f'Low: {summary[\"Low\"]}')
+    print(f'Informational: {summary[\"Informational\"]}')
+    
+    if summary['High'] > 0 or summary['Medium'] > 0:
+        print('\\n## Critical Findings:')
+        for site in data.get('site', []):
+            for alert in site.get('alerts', []):
+                risk = alert.get('riskcode', '0')
+                if risk in ['3', '2']:
+                    print(f'- {alert.get(\"name\")} (Risk: {\"High\" if risk == \"3\" else \"Medium\"})')
+                    print(f'  URL: {alert.get(\"url\")}')
+                    print(f'  Description: {alert.get(\"description\", \"\")[:200]}...')
+    
+except Exception as e:
+    print(f'Error processing report: {e}')
+    sys.exit(1)
+          " > EVIDENCE/P11/scan_summary.txt
+          
+          echo "JSON report and summary saved"
+        fi
+        
+        echo "Evidence saved to EVIDENCE/P11/"
+        
+    - name: Stop Docker containers
+      if: always()
+      run: |
+        docker compose down
+        
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: zap-security-reports
+        path: EVIDENCE/P11/
+        retention-days: 30
+        
+    - name: Commit evidence to repository
+      run: |
+        if [ -d "EVIDENCE/P11" ] && [ "$(ls -A EVIDENCE/P11)" ]; then
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add EVIDENCE/P11/
+          git commit -m "Add ZAP DAST scan reports for P11 assignment"
+          git push origin HEAD:p11-dast-integration
+        else
+          echo "No evidence files to commit"
+        fi

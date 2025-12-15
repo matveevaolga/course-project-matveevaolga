@@ -130,7 +130,7 @@ jobs:
           exit 1
         fi
  
-    - name: Generate P11 Analysis Report
+      - name: Generate P11 Analysis Report
       if: steps.start-app.outputs.app_ready == 'true'
       run: |
         echo "Generating P11 analysis report..."
@@ -158,7 +158,7 @@ jobs:
         echo "" >> EVIDENCE/P11/P11_ANALYSIS.md
         
         if [ -f "zap_baseline.json" ]; then
-          python3 << 'PYEOF' >> EVIDENCE/P11/P11_ANALYSIS.md
+          python_output=$(python3 << 'PYEOF'
 import json, sys, os
 
 try:
@@ -184,31 +184,35 @@ try:
                 'name': alert.get('name', 'N/A'),
                 'risk': risk,
                 'url': alert.get('url', 'N/A'),
-                'desc': alert.get('description', 'N/A')[:200]
-            })
+                'desc': alert.get('description', 'N/A')[:200]})
     
-    print("### Статистика алертов")
-    print(f"- **High**: {alert_counts['High']}")
-    print(f"- **Medium**: {alert_counts['Medium']}")
-    print(f"- **Low**: {alert_counts['Low']}")
-    print(f"- **Informational**: {alert_counts['Informational']}")
-    print(f"\n**Всего алертов**: {sum(alert_counts.values())}")
+    output_lines = []
+    output_lines.append("### Статистика алертов")
+    output_lines.append(f"- **High**: {alert_counts['High']}")
+    output_lines.append(f"- **Medium**: {alert_counts['Medium']}")
+    output_lines.append(f"- **Low**: {alert_counts['Low']}")
+    output_lines.append(f"- **Informational**: {alert_counts['Informational']}")
+    output_lines.append(f"\n**Всего алертов**: {sum(alert_counts.values())}")
     
     if alerts_list:
-        print("\n### Примеры для анализа")
+        output_lines.append("\n### Примеры для анализа")
         for i, alert in enumerate(alerts_list[:3], 1):
             risk_map = {'3': 'High', '2': 'Medium', '1': 'Low', '0': 'Informational'}
             risk_level = risk_map.get(alert['risk'], 'Informational')
-            print(f"{i}. **{alert['name']}** ({risk_level})")
-            print(f"   - URL: {alert['url']}")
-            print(f"   - Описание: {alert['desc']}...")
-            print()
+            output_lines.append(f"{i}. **{alert['name']}** ({risk_level})")
+            output_lines.append(f"   - URL: {alert['url']}")
+            output_lines.append(f"   - Описание: {alert['desc']}...")
+            output_lines.append("")
+    
+    print("\n".join(output_lines))
 
 except Exception as e:
-    print(f"Ошибка при анализе отчёта: {str(e)}")
-    print("\n**Примечание**: Файл отчёта существует, но не может быть проанализирован.")
-    print("Проверьте содержимое zap_baseline.json вручную.")
+    error_msg = f"Ошибка при анализе отчёта: {str(e)}\n\n**Примечание**: Файл отчёта существует, но не может быть проанализирован.\nПроверьте содержимое zap_baseline.json вручную."
+    print(error_msg)
 PYEOF
+          )
+          
+          echo "$python_output" >> EVIDENCE/P11/P11_ANALYSIS.md
         else
           echo "**Внимание**: Основной отчёт ZAP (zap_baseline.json) не был создан." >> EVIDENCE/P11/P11_ANALYSIS.md
           echo "Проверьте логи выполнения предыдущих шагов." >> EVIDENCE/P11/P11_ANALYSIS.md

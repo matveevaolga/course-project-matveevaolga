@@ -1,7 +1,6 @@
 FROM python:3.11-slim AS builder
 WORKDIR /app
 
-# Build stage
 RUN apt-get update && apt-get install -y \
     curl \
     gcc \
@@ -13,7 +12,6 @@ RUN pip install --no-cache-dir --user -r requirements.txt -r requirements-dev.tx
 FROM python:3.11-slim AS runtime
 WORKDIR /app
 
-# Runtime stage
 RUN groupadd -r appuser && useradd -r -g appuser appuser && \
     apt-get update && apt-get install -y curl && \
     rm -rf /var/lib/apt/lists/*

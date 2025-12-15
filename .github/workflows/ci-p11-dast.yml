@@ -159,58 +159,58 @@ jobs:
         
         if [ -f "zap_baseline.json" ]; then
           python_output=$(python3 << 'PYEOF'
-import json, sys, os
+        import json, sys, os
 
-try:
-    with open('zap_baseline.json', 'r', encoding='utf-8') as f:
-        data = json.load(f)
-    
-    alert_counts = {'High': 0, 'Medium': 0, 'Low': 0, 'Informational': 0}
-    alerts_list = []
-    
-    for site in data.get('site', []):
-        for alert in site.get('alerts', []):
-            risk = alert.get('riskcode', '0')
-            if risk == '3':
-                alert_counts['High'] += 1
-            elif risk == '2':
-                alert_counts['Medium'] += 1
-            elif risk == '1':
-                alert_counts['Low'] += 1
-            else:
-                alert_counts['Informational'] += 1
+        try:
+            with open('zap_baseline.json', 'r', encoding='utf-8') as f:
+                data = json.load(f)
             
-            alerts_list.append({
-                'name': alert.get('name', 'N/A'),
-                'risk': risk,
-                'url': alert.get('url', 'N/A'),
-                'desc': alert.get('description', 'N/A')[:200]})
-    
-    output_lines = []
-    output_lines.append("### Статистика алертов")
-    output_lines.append(f"- **High**: {alert_counts['High']}")
-    output_lines.append(f"- **Medium**: {alert_counts['Medium']}")
-    output_lines.append(f"- **Low**: {alert_counts['Low']}")
-    output_lines.append(f"- **Informational**: {alert_counts['Informational']}")
-    output_lines.append(f"\n**Всего алертов**: {sum(alert_counts.values())}")
-    
-    if alerts_list:
-        output_lines.append("\n### Примеры для анализа")
-        for i, alert in enumerate(alerts_list[:3], 1):
-            risk_map = {'3': 'High', '2': 'Medium', '1': 'Low', '0': 'Informational'}
-            risk_level = risk_map.get(alert['risk'], 'Informational')
-            output_lines.append(f"{i}. **{alert['name']}** ({risk_level})")
-            output_lines.append(f"   - URL: {alert['url']}")
-            output_lines.append(f"   - Описание: {alert['desc']}...")
-            output_lines.append("")
-    
-    print("\n".join(output_lines))
+            alert_counts = {'High': 0, 'Medium': 0, 'Low': 0, 'Informational': 0}
+            alerts_list = []
+            
+            for site in data.get('site', []):
+                for alert in site.get('alerts', []):
+                    risk = alert.get('riskcode', '0')
+                    if risk == '3':
+                        alert_counts['High'] += 1
+                    elif risk == '2':
+                        alert_counts['Medium'] += 1
+                    elif risk == '1':
+                        alert_counts['Low'] += 1
+                    else:
+                        alert_counts['Informational'] += 1
+                    
+                    alerts_list.append({
+                        'name': alert.get('name', 'N/A'),
+                        'risk': risk,
+                        'url': alert.get('url', 'N/A'),
+                        'desc': alert.get('description', 'N/A')[:200]})
+            
+            output_lines = []
+            output_lines.append("### Статистика алертов")
+            output_lines.append(f"- **High**: {alert_counts['High']}")
+            output_lines.append(f"- **Medium**: {alert_counts['Medium']}")
+            output_lines.append(f"- **Low**: {alert_counts['Low']}")
+            output_lines.append(f"- **Informational**: {alert_counts['Informational']}")
+            output_lines.append(f"\n**Всего алертов**: {sum(alert_counts.values())}")
+            
+            if alerts_list:
+                output_lines.append("\n### Примеры для анализа")
+                for i, alert in enumerate(alerts_list[:3], 1):
+                    risk_map = {'3': 'High', '2': 'Medium', '1': 'Low', '0': 'Informational'}
+                    risk_level = risk_map.get(alert['risk'], 'Informational')
+                    output_lines.append(f"{i}. **{alert['name']}** ({risk_level})")
+                    output_lines.append(f"   - URL: {alert['url']}")
+                    output_lines.append(f"   - Описание: {alert['desc']}...")
+                    output_lines.append("")
+            
+            print("\n".join(output_lines))
 
-except Exception as e:
-    error_msg = f"Ошибка при анализе отчёта: {str(e)}\n\n**Примечание**: Файл отчёта существует, но не может быть проанализирован.\nПроверьте содержимое zap_baseline.json вручную."
-    print(error_msg)
-PYEOF
-          )
+        except Exception as e:
+            error_msg = f"Ошибка при анализе отчёта: {str(e)}\n\n**Примечание**: Файл отчёта существует, но не может быть проанализирован.\nПроверьте содержимое zap_baseline.json вручную."
+            print(error_msg)
+        PYEOF
+                  )
           
           echo "$python_output" >> EVIDENCE/P11/P11_ANALYSIS.md
         else

@@ -157,128 +157,129 @@ jobs:
         
         # Создаём анализ-отчёт
         cat > EVIDENCE/P11/P11_ANALYSIS.md << 'EOF'
-EOF
-        
-        if [ -f "zap_baseline.json" ]; then
-          python3 << 'PYEOF' >> EVIDENCE/P11/P11_ANALYSIS.md
-import json, sys, os
 
-try:
-    with open('zap_baseline.json', 'r', encoding='utf-8') as f:
-        data = json.load(f)
-    
-    alert_counts = {'High': 0, 'Medium': 0, 'Low': 0, 'Informational': 0}
-    alerts_list = []
-    
-    for site in data.get('site', []):
-        for alert in site.get('alerts', []):
-            risk = alert.get('riskcode', '0')
-            if risk == '3':
-                alert_counts['High'] += 1
-            elif risk == '2':
-                alert_counts['Medium'] += 1
-            elif risk == '1':
-                alert_counts['Low'] += 1
-            else:
-                alert_counts['Informational'] += 1
+        ANALYSIS_EOF
+                
+                if [ -f "zap_baseline.json" ]; then
+                  python3 << 'PYEOF' >> EVIDENCE/P11/P11_ANALYSIS.md
+        import json, sys, os
+
+        try:
+            with open('zap_baseline.json', 'r', encoding='utf-8') as f:
+                data = json.load(f)
             
-            # Сохраняем для примеров
-            alerts_list.append({
-                'name': alert.get('name', 'N/A'),
-                'risk': risk,
-                'url': alert.get('url', 'N/A'),
-                'desc': alert.get('description', 'N/A')[:200]})
-    
-    # Выводим статистику
-    print(f"- **High**: {alert_counts['High']}")
-    print(f"- **Medium**: {alert_counts['Medium']}")
-    print(f"- **Low**: {alert_counts['Low']}")
-    print(f"- **Informational**: {alert_counts['Informational']}")
-    print(f"\n**Всего алертов**: {sum(alert_counts.values())}")
-    
-    # Примеры алертов для анализа
-    if alerts_list:
-        print("\n### Примеры для анализа")
-        for i, alert in enumerate(alerts_list[:3], 1):
-            risk_map = {'3': 'High', '2': 'Medium', '1': 'Low', '0': 'Informational'}
-            risk_level = risk_map.get(alert['risk'], 'Informational')
-            print(f"{i}. **{alert['name']}** ({risk_level})")
-            print(f"   - URL: {alert['url']}")
-            print(f"   - Описание: {alert['desc']}...")
-            print()
-    
-except Exception as e:
-    print(f"Ошибка при анализе отчёта: {str(e)}")
-    print("\n**Примечание**: Файл отчёта существует, но не может быть проанализирован.")
-    print("Проверьте содержимое zap_baseline.json вручную.")
-PYEOF
-        else:
-          echo "\n**Внимание**: Основной отчёт ZAP (zap_baseline.json) не был создан." >> EVIDENCE/P11/P11_ANALYSIS.md
-          echo "Проверьте логи выполнения предыдущих шагов." >> EVIDENCE/P11/P11_ANALYSIS.md
-        
-        # Завершаем отчёт
-        cat >> EVIDENCE/P11/P11_ANALYSIS.md << 'EOF'
+            alert_counts = {'High': 0, 'Medium': 0, 'Low': 0, 'Informational': 0}
+            alerts_list = []
+            
+            for site in data.get('site', []):
+                for alert in site.get('alerts', []):
+                    risk = alert.get('riskcode', '0')
+                    if risk == '3':
+                        alert_counts['High'] += 1
+                    elif risk == '2':
+                        alert_counts['Medium'] += 1
+                    elif risk == '1':
+                        alert_counts['Low'] += 1
+                    else:
+                        alert_counts['Informational'] += 1
+                    
+                    # Сохраняем для примеров
+                    alerts_list.append({
+                        'name': alert.get('name', 'N/A'),
+                        'risk': risk,
+                        'url': alert.get('url', 'N/A'),
+                        'desc': alert.get('description', 'N/A')[:200]})
+            
+            # Выводим статистику
+            print(f"- **High**: {alert_counts['High']}")
+            print(f"- **Medium**: {alert_counts['Medium']}")
+            print(f"- **Low**: {alert_counts['Low']}")
+            print(f"- **Informational**: {alert_counts['Informational']}")
+            print(f"\n**Всего алертов**: {sum(alert_counts.values())}")
+            
+            # Примеры алертов для анализа
+            if alerts_list:
+                print("\n### Примеры для анализа")
+                for i, alert in enumerate(alerts_list[:3], 1):
+                    risk_map = {'3': 'High', '2': 'Medium', '1': 'Low', '0': 'Informational'}
+                    risk_level = risk_map.get(alert['risk'], 'Informational')
+                    print(f"{i}. **{alert['name']}** ({risk_level})")
+                    print(f"   - URL: {alert['url']}")
+                    print(f"   - Описание: {alert['desc']}...")
+                    print()
+            
+        except Exception as e:
+            print(f"Ошибка при анализе отчёта: {str(e)}")
+            print("\n**Примечание**: Файл отчёта существует, но не может быть проанализирован.")
+            print("Проверьте содержимое zap_baseline.json вручную.")
+        PYEOF
+                else:
+                  echo "\n**Внимание**: Основной отчёт ZAP (zap_baseline.json) не был создан." >> EVIDENCE/P11/P11_ANALYSIS.md
+                  echo "Проверьте логи выполнения предыдущих шагов." >> EVIDENCE/P11/P11_ANALYSIS.md
+                
+                # Завершаем отчёт
+                cat >> EVIDENCE/P11/P11_ANALYSIS.md << 'EOF'
 
-## Рекомендации
+        ## Рекомендации
 
-1. **High/Medium риски** требуют немедленного исправления
-2. **Low риски** рекомендуется исправить в течение спринта
-3. **Informational** - могут быть приняты с обоснованием
+        1. **High/Medium риски** требуют немедленного исправления
+        2. **Low риски** рекомендуется исправить в течение спринта
+        3. **Informational** - могут быть приняты с обоснованием
 
-## Следующие шаги
+        ## Следующие шаги
 
-1. Откройте `zap_baseline.html` для детального просмотра
-2. Проанализируйте критические алерты
-3. Внесите исправления в код приложения
-4. Повторите сканирование для проверки
+        1. Откройте `zap_baseline.html` для детального просмотра
+        2. Проанализируйте критические алерты
+        3. Внесите исправления в код приложения
+        4. Повторите сканирование для проверки
 
----
-*Этот файл создан автоматически. Дополните его результатами ручного анализа.*
-EOF
-        
-        echo "P11_ANALYSIS.md created"
-        
-    - name: Verify and list files
-      run: |
-        echo "=== Verification of generated files ==="
-        if [ -d "EVIDENCE/P11" ]; then
-          echo "Contents of EVIDENCE/P11/:"
-          ls -la EVIDENCE/P11/
-          
-          echo -e "\nFile sizes:"
-          for file in EVIDENCE/P11/*; do
-            if [ -f "$file" ]; then
-              size=$(wc -c < "$file")
-              echo "$(basename "$file"): $size bytes"
-            fi
-          done
-        else
-          echo " EVIDENCE/P11 directory not found!"
-        fi
-        
-    - name: Upload artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: zap-reports
-        path: EVIDENCE/P11/
-        retention-days: 30
-        
-    - name: Stop application
-      if: always()
-      run: |
-        echo "Stopping application..."
-        if [ -f "app.pid" ]; then
-          PID=$(cat app.pid)
-          echo "Stopping process $PID"
-          kill $PID 2>/dev/null || true
-          sleep 2
-          # Проверяем, что процесс завершился
-          if ps -p $PID > /dev/null 2>&1; then
-            echo "Process still running, forcing kill..."
-            kill -9 $PID 2>/dev/null || true
+        ---
+        *Этот файл создан автоматически. Дополните его результатами ручного анализа.*
+        EOF
+                
+                echo "P11_ANALYSIS.md created"
+                
+      - name: Verify and list files
+        run: |
+          echo "=== Verification of generated files ==="
+          if [ -d "EVIDENCE/P11" ]; then
+            echo "Contents of EVIDENCE/P11/:"
+            ls -la EVIDENCE/P11/
+            
+            echo -e "\nFile sizes:"
+            for file in EVIDENCE/P11/*; do
+              if [ -f "$file" ]; then
+                size=$(wc -c < "$file")
+                echo "$(basename "$file"): $size bytes"
+              fi
+            done
+          else
+            echo " EVIDENCE/P11 directory not found!"
           fi
-          rm -f app.pid
-        fi
-        # Очистка
-        rm -f app.log zap_baseline.html zap_baseline.json 2>/dev/null || true
-        echo "Cleanup completed"
+          
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-reports
+          path: EVIDENCE/P11/
+          retention-days: 30
+                
+      - name: Stop application
+        if: always()
+        run: |
+          echo "Stopping application..."
+          if [ -f "app.pid" ]; then
+            PID=$(cat app.pid)
+            echo "Stopping process $PID"
+            kill $PID 2>/dev/null || true
+            sleep 2
+            # Проверяем, что процесс завершился
+            if ps -p $PID > /dev/null 2>&1; then
+              echo "Process still running, forcing kill..."
+              kill -9 $PID 2>/dev/null || true
+            fi
+            rm -f app.pid
+          fi
+          # Очистка
+          rm -f app.log zap_baseline.html zap_baseline.json 2>/dev/null || true
+          echo "Cleanup completed"

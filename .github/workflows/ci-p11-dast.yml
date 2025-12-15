@@ -157,20 +157,8 @@ jobs:
         
         # Создаём анализ-отчёт
         cat > EVIDENCE/P11/P11_ANALYSIS.md << 'EOF'
-# P11 DAST Scan Analysis
-
-## Общая информация
-- **Дата сканирования**: $(date '+%Y-%m-%d %H:%M:%S')
-- **Версия ZAP**: 2.17.0
-- **Цель**: http://localhost:8000
-- **Статус приложения**: Запущено успешно
-
-## Результаты сканирования
-
-### Статистика алертов
 EOF
         
-        # Анализируем JSON и добавляем статистику
         if [ -f "zap_baseline.json" ]; then
           python3 << 'PYEOF' >> EVIDENCE/P11/P11_ANALYSIS.md
 import json, sys, os

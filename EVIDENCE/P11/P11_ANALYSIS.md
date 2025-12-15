@@ -55,7 +55,7 @@
 **Риск**: Medium - может привести к clickjacking атакам через iframe
 **Решение**: 
 - Добавлен middleware с заголовком `X-Frame-Options: DENY`
-- Коммит: [abc123](ссылка на коммит)
+- Коммит: 7eac972c75d7958523aac451ffd63161fb8e6952
 - Фикс подтверждает принцип: security headers для всех ответов
 
 ### 2. Content Security Policy Header Not Set (Medium)

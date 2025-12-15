@@ -130,7 +130,7 @@ jobs:
           exit 1
         fi
  
-      - name: Generate P11 Analysis Report
+    - name: Generate P11 Analysis Report
       if: steps.start-app.outputs.app_ready == 'true'
       run: |
         echo "Generating P11 analysis report..."

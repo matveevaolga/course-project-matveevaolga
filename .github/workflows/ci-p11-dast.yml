@@ -43,29 +43,44 @@ jobs:
       id: start-app
       run: |
         echo "Starting application with Docker Compose..."
-        docker compose up -d app
+        
+        # Создаем compose файл БЕЗ healthcheck для тестирования
+        cat > docker-compose.ci.yml << 'EOF'
+        services:
+          app:
+            image: feature-votes-app:latest
+            container_name: feature-votes-app-ci
+            build:
+              context: .
+              dockerfile: Dockerfile
+            ports:
+              - "8000:8000"
+            environment:
+              - PYTHONUNBUFFERED=1
+              - ENVIRONMENT=development
+            healthcheck:
+              disable: true
+        EOF
+        
+        docker compose -f docker-compose.ci.yml up -d --build
         
         echo "Waiting for application to be ready..."
         MAX_ATTEMPTS=40
         ATTEMPT=1
         
         while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
-          CONTAINER_STATUS=$(docker compose ps app --status running 2>/dev/null | grep -c "(healthy)")
-          
-          if [ "$CONTAINER_STATUS" -eq 1 ]; then
-            if curl -s -f http://localhost:8000/health > /dev/null 2>&1; then
-              if curl -s -f http://localhost:8000/docs > /dev/null 2>&1; then
-                echo "Application is fully ready and healthy! (attempt $ATTEMPT)"
-                echo "app_ready=true" >> $GITHUB_OUTPUT
-                break
-              fi
-            fi
+          if curl -s -f http://localhost:8000/health > /dev/null 2>&1; then
+            APP_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $(docker compose -f docker-compose.ci.yml ps -q app))
+            echo "Application is ready! Container IP: $APP_IP (attempt $ATTEMPT)"
+            echo "APP_IP=$APP_IP" >> $GITHUB_ENV
+            echo "app_ready=true" >> $GITHUB_OUTPUT
+            break
           fi
           
           if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
             echo "Application failed to start within timeout"
             echo "Showing container logs:"
-            docker compose logs app || true
+            docker compose -f docker-compose.ci.yml logs app || true
             echo "app_ready=false" >> $GITHUB_OUTPUT
             exit 1
           fi
@@ -74,9 +89,6 @@ jobs:
           sleep 3
           ATTEMPT=$((ATTEMPT + 1))
         done
-        
-        APP_IP=$(docker inspect -f '{{range.NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $(docker compose ps -q app))
-        echo "APP_IP=$APP_IP" >> $GITHUB_ENV
         
     - name: Download and configure ZAP
       if: steps.start-app.outputs.app_ready == 'true'

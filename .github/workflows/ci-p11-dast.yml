@@ -135,7 +135,7 @@ jobs:
           echo "JSON report was not created"
           exit 1
         fi
-        
+ 
     - name: Generate P11 Analysis Report
       if: steps.start-app.outputs.app_ready == 'true'
       run: |

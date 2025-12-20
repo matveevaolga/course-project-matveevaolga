@@ -11,7 +11,7 @@ pip install -r requirements.txt -r requirements-dev.txt
 pre-commit install
 uvicorn app.main:app --reload
 ```
-
+н
 ## Ритуал перед PR
 ```bash
 ruff check --fix .

@@ -1,0 +1,30 @@
+rules:
+  - id: "fastapi-hardcoded-secret"
+    patterns:
+      - pattern: "SECRET_KEY = ..."
+      - pattern-not: "SECRET_KEY = os.getenv(...)"
+    message: "Hardcoded secret detected. Use environment variables instead."
+    languages: [python]
+    severity: ERROR
+
+  - id: "insecure-deserialization"
+    patterns:
+      - pattern: "pickle.loads(...)"
+    message: "Insecure deserialization with pickle detected. Use safer alternatives."
+    languages: [python]
+    severity: WARNING
+
+  - id: "sql-injection-risk"
+    patterns:
+      - pattern: "f\"SELECT ... {variable}\""
+      - pattern: "f'SELECT ... {variable}'"
+    message: "Potential SQL injection risk. Use parameterized queries."
+    languages: [python]
+    severity: ERROR
+
+  - id: "debug-mode-production"
+    patterns:
+      - pattern: "debug=True"
+    message: "Debug mode enabled. Disable in production."
+    languages: [python]
+    severity: WARNING

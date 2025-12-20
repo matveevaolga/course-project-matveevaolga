@@ -1,25 +1,65 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v4.4.0
     hooks:
-      - id: end-of-file-fixer
       - id: trailing-whitespace
-      - id: check-merge-conflict
-      - id: check-json
+      - id: end-of-file-fixer
       - id: check-yaml
-      - id: mixed-line-ending
       - id: detect-private-key
+        exclude: |
+          (?x)^(
+            security/\.gitleaks\.toml|
+            .*\.example|
+            tests/.*|
+            docs/.*
+          )$
       - id: check-added-large-files
-  - repo: https://github.com/psf/black
-    rev: 24.8.0
-    hooks:
-      - id: black
-  - repo: https://github.com/pycqa/isort
-    rev: 5.13.2
-    hooks:
-      - id: isort
+        args: ['--maxkb=500']
+
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.6.9
     hooks:
       - id: ruff
-        args: ["--fix"]
+        args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff-format
+
+  - repo: https://github.com/psf/black
+    rev: 24.8.0
+    hooks:
+      - id: black
+
+  - repo: https://github.com/PyCQA/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+
+  - repo: https://github.com/returntocorp/semgrep
+    rev: v1.72.0
+    hooks:
+      - id: semgrep
+        args: ['--config', 'p/ci', '--error']
+        additional_dependencies: []
+
+  - repo: https://github.com/zricethezav/gitleaks
+    rev: v8.18.1
+    hooks:
+      - id: gitleaks
+        args: ['--config=security/.gitleaks.toml', '--verbose']
+
+  - repo: local
+    hooks:
+      - id: pytest-check
+        name: pytest quick check
+        entry: pytest -q --tb=short
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [push]
+
+      - id: bandit-check
+        name: bandit security scan
+        entry: bandit -r app/ -q
+        language: system
+        pass_filenames: false
+        always_run: false
+        stages: [push]

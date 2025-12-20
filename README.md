@@ -11,7 +11,7 @@ pip install -r requirements.txt -r requirements-dev.txt
 pre-commit install
 uvicorn app.main:app --reload
 ```
-
+н
 ## Ритуал перед PR
 ```bash
 ruff check --fix .
@@ -37,6 +37,24 @@ docker run --rm -p 8000:8000 feature-votes
 # или
 docker compose up --build
 ```
+
+### Безопасность
+- Read-only файловая система
+- Health checks
+- Security hardening (no-new-privileges)
+- Multi-stage build для минимального размера образа
+- Запуск под non-root пользователем
+
+### Запуск
+```bash
+# Базовый запуск
+docker compose up --build
+
+# Полный стек (БД + Redis)
+docker compose --profile full up --build
+
+# Проверка здоровья
+curl http://localhost:8000/health
 
 ## Эндпойнты
 ### default

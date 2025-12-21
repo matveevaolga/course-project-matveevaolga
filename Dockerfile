@@ -1,7 +1,6 @@
 FROM python:3.11-slim AS builder
 WORKDIR /app
 
-# Build stage
 RUN apt-get update && apt-get install -y \
     curl \
     gcc \
@@ -13,19 +12,26 @@ RUN pip install --no-cache-dir --user -r requirements.txt -r requirements-dev.tx
 FROM python:3.11-slim AS runtime
 WORKDIR /app
 
-# Runtime stage
-RUN groupadd -r appuser && useradd -r -g appuser appuser && \
-    apt-get update && apt-get install -y curl && \
-    rm -rf /var/lib/apt/lists/*
+ARG UID=10001
+ARG GID=10001
+ARG APP_USER=appuser
 
-COPY --from=builder /root/.local /home/appuser/.local
-COPY --chown=appuser:appuser . .
+RUN groupadd -r ${APP_USER} -g ${GID} && \
+    useradd -r -u ${UID} -g ${APP_USER} ${APP_USER} && \
+    apt-get update && apt-get install -y --no-install-recommends curl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-RUN chmod -R 755 /home/appuser && \
-    find /home/appuser/.local -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+COPY --from=builder /root/.local /home/${APP_USER}/.local
+COPY --chown=${APP_USER}:${APP_USER} . .
 
-USER appuser
-ENV PATH="/home/appuser/.local/bin:${PATH}"
+RUN chown -R ${APP_USER}:${APP_USER} /app && \
+    chmod -R 755 /home/${APP_USER} && \
+    find /home/${APP_USER}/.local -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true && \
+    find /app -name "*.pyc" -delete
+
+USER ${APP_USER}
+ENV PATH="/home/${APP_USER}/.local/bin:${PATH}"
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/app
 

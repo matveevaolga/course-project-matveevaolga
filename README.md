@@ -160,8 +160,31 @@ Informational - принимаются с обоснованием
 
 ### Пример использования
 ```bash
+
 # Просмотр отчета после сканирования
 open EVIDENCE/P11/zap_baseline.html
 
 # Проверка конкретного алерта
 grep -A5 -B5 "Missing Anti-clickjacking" EVIDENCE/P11/zap_baseline.json
+
+## Security Scanning
+
+This project uses multiple security scanners:
+
+### Static Analysis
+- Hadolint: Dockerfile linting
+- Checkov: Infrastructure as Code scanning
+- Trivy: Container vulnerability scanning
+
+### Reports
+Security reports are available in EVIDENCE/P12/:
+- hadolint_report.json - Dockerfile best practices
+- checkov_report.json - IaC security checks  
+- trivy_report.json - Container vulnerabilities
+
+### Hardening Measures
+- Non-root container execution
+- Resource limits
+- Read-only filesystem
+- Network isolation
+- Regular security updates

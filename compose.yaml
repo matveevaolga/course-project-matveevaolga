@@ -1,8 +1,72 @@
 services:
   app:
-    build: .
+    image: feature-votes-app:latest
+    container_name: feature-votes-app
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     environment:
       - PYTHONUNBUFFERED=1
-    profiles: ["dev"]
+      - ENVIRONMENT=development
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETGID
+      - SETUID
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64M
+      - /var/tmp:rw,noexec,nosuid,size=32M
+    user: appuser
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: feature-votes-cache
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - redis_data:/data
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: feature-votes-db
+    environment:
+      - POSTGRES_DB=feature_votes
+      - POSTGRES_USER=appuser
+      - POSTGRES_PASSWORD=apppass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  redis_data:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge

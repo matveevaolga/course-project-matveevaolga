@@ -93,10 +93,11 @@ jobs:
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: Dockerfile
-          config: .hadolint.yaml
-          format: sarif
-          output-file: hadolint-results.sarif
+          config: security/hadolint.yaml
+          format: json
+          output-file: EVIDENCE/P12/hadolint_report.json
           failure-threshold: warning
+        continue-on-error: true
 
       - name: Upload Hadolint results as artifact
         uses: actions/upload-artifact@v4

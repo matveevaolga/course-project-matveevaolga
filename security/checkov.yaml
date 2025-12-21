@@ -3,8 +3,4 @@ compact: true
 framework:
   - dockerfile
   - docker_compose
-skip-check:
-  - CKV_DOCKER_3
-  - CKV_DOCKER_7
-  - CKV_DOCKER_8
 output: json

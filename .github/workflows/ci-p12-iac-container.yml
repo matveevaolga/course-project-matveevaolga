@@ -23,12 +23,13 @@ concurrency:
 jobs:
   security-scans:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
+
+    - name: Create evidence directory
+      run: mkdir -p EVIDENCE/P12
 
     - name: Build Docker image
       run: |
@@ -36,10 +37,18 @@ jobs:
 
     - name: Run Hadolint
       run: |
-        docker run --rm -i \
-          -v "${{ github.workspace }}/security/hadolint.yaml:/config.yaml" \
-          hadolint/hadolint \
-          hadolint --config /config.yaml -f json - < Dockerfile > EVIDENCE/P12/hadolint_report.json || true
+        if [ -f "security/hadolint.yaml" ]; then
+          docker run --rm \
+            -v "${{ github.workspace }}/security/hadolint.yaml:/config.yaml" \
+            -v "${{ github.workspace }}:/src" \
+            hadolint/hadolint \
+            hadolint --config /config.yaml -f json /src/Dockerfile > EVIDENCE/P12/hadolint_report.json
+        else
+          docker run --rm \
+            -v "${{ github.workspace }}:/src" \
+            hadolint/hadolint \
+            hadolint -f json /src/Dockerfile > EVIDENCE/P12/hadolint_report.json
+        fi
       continue-on-error: true
 
     - name: Run Checkov
@@ -50,39 +59,22 @@ jobs:
           -d /iac \
           --config-file /iac/security/checkov.yaml \
           -o json \
-          > EVIDENCE/P12/checkov_report.json || true
+          > EVIDENCE/P12/checkov_report.json
       continue-on-error: true
 
     - name: Run Trivy
       run: |
         docker run --rm \
           -v /var/run/docker.sock:/var/run/docker.sock \
-          -v "${{ github.workspace }}/EVIDENCE/P12:/output" \
           aquasec/trivy \
-          image --format json --output /output/trivy_report.json \
+          image --format json --output EVIDENCE/P12/trivy_report.json \
           --severity HIGH,CRITICAL \
-          feature-votes-app:latest || true
+          feature-votes-app:latest
       continue-on-error: true
 
     - name: Upload evidence
       uses: actions/upload-artifact@v4
       with:
         name: p12-security-evidence
-        path: |
-          EVIDENCE/P12/
-          security/
+        path: EVIDENCE/P12/
         if-no-files-found: error
-
-    - name: Display summary
-      run: |
-        echo "## Security Scan Summary"
-        echo ""
-        if [ -f "EVIDENCE/P12/hadolint_report.json" ]; then
-          echo "Hadolint report generated"
-        fi
-        if [ -f "EVIDENCE/P12/checkov_report.json" ]; then
-          echo "Checkov report generated"
-        fi
-        if [ -f "EVIDENCE/P12/trivy_report.json" ]; then
-          echo "Trivy report generated"
-        fi

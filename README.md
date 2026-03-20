@@ -1,6 +1,6 @@
-# Feature Votes API
+# Course Project
 
-Система голосования за фичи проекта. Пользователи могут предлагать свои и голосовать за уже предложенные фичи.
+A sample application for Secure software development course with a threat model, a configured build/test pipeline, automated scans, and basic response practices.
 
 
 ## Быстрый старт

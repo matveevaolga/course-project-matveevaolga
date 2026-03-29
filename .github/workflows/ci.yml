@@ -79,3 +79,29 @@ jobs:
 
       - name: Pre-commit (all files)
         run: pre-commit run --all-files
+
+      - name: Performance with Caching
+        run: |
+          echo "## Performance Metrics with Caching" >> $GITHUB_STEP_SUMMARY
+          uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          SERVER_PID=$!
+          sleep 5
+          echo "### First Request (Cache Miss)" >> $GITHUB_STEP_SUMMARY
+          start_time=$(date +%s%3N)
+          curl -s http://localhost:8000/features/stats > /dev/null
+          end_time=$(date +%s%3N)
+          first_request=$((end_time - start_time))
+          echo "- Response time: ${first_request}ms" >> $GITHUB_STEP_SUMMARY
+          echo "### Second Request (Cache Hit)" >> $GITHUB_STEP_SUMMARY
+          start_time=$(date +%s%3N)
+          response=$(curl -s http://localhost:8000/features/stats)
+          end_time=$(date +%s%3N)
+          second_request=$((end_time - start_time))
+          echo "- Response time: ${second_request}ms" >> $GITHUB_STEP_SUMMARY
+          improvement=$((first_request - second_request))
+          improvement_pct=$((improvement * 100 / first_request))
+          echo "### Performance Improvement" >> $GITHUB_STEP_SUMMARY
+          echo "- Cache hit improvement: ${improvement}ms (${improvement_pct}%)" >> $GITHUB_STEP_SUMMARY
+          cache_stats=$(curl -s http://localhost:8000/features/cache/stats)
+          echo "- Cache stats: ${cache_stats}" >> $GITHUB_STEP_SUMMARY
+          kill $SERVER_PID

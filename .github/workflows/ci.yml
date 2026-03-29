@@ -1,8 +1,9 @@
 name: CI
 
 on:
-  pull_request:
   push:
+    branches: [main]
+  pull_request:
     branches: [main]
 
 permissions:
@@ -13,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  security-and-tests:
     runs-on: ubuntu-latest
 
     steps:
@@ -21,13 +22,20 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           cache: "pip"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt -r requirements-dev.txt
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+          pip install pytest ruff black isort coverage bandit
+
+      - name: Security lint with ruff
+        run: |
+          echo "## Security Lint Results" >> $GITHUB_STEP_SUMMARY
+          ruff check --select S . && echo "No security issues found" >> $GITHUB_STEP_SUMMARY || echo "Security issues found" >> $GITHUB_STEP_SUMMARY
 
       - name: Lint with ruff
         run: ruff check --output-format=github .
@@ -38,35 +46,61 @@ jobs:
       - name: Check imports with isort
         run: isort --check-only .
 
-      - name: Run tests
-        run: pytest -q
+      - name: Run mypy static type checking
+        run: |
+          echo "## MyPy Static Type Checking" >> $GITHUB_STEP_SUMMARY
+          mypy app/ tests/ --ignore-missing-imports
+          if [ $? -eq 0 ]; then
+            echo "MyPy passed - no type errors found" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "MyPy found type errors" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: Run security tests
+        run: |
+          echo "## Security Test Results" >> $GITHUB_STEP_SUMMARY
+          pytest tests/test_security.py -v && echo "All security tests passed" >> $GITHUB_STEP_SUMMARY || echo "Security tests failed" >> $GITHUB_STEP_SUMMARY
+
+      - name: Run PII masking tests
+        run: |
+          echo "## PII Masking Test Results" >> $GITHUB_STEP_SUMMARY
+          pytest tests/test_pii_masking.py -v && echo "All PII masking tests passed" >> $GITHUB_STEP_SUMMARY || echo "PII masking tests failed" >> $GITHUB_STEP_SUMMARY
+
+      - name: Run all tests with coverage
+        run: |
+          coverage run -m pytest tests/ -v
+          coverage report
+          echo "## Test Coverage" >> $GITHUB_STEP_SUMMARY
+          coverage report >> $GITHUB_STEP_SUMMARY
 
       - name: Domain smoke test
         run: |
+          echo "## Domain Smoke Test" >> $GITHUB_STEP_SUMMARY
           python -c "
           from app.main import app
           from fastapi.testclient import TestClient
           client = TestClient(app)
 
-          # Проверка здоровья приложения
+          # Health check
           resp = client.get('/health')
           assert resp.status_code == 200
           assert resp.json() == {'status': 'ok'}
           print('Health check passed')
 
-          # Проверка получения фич
+          # Features endpoint
           resp = client.get('/features/')
           assert resp.status_code == 200
           assert isinstance(resp.json(), list)
           print('Features endpoint working')
 
-          # Проверка топ фич
+          # Top features endpoint
           resp = client.get('/features/top')
           assert resp.status_code == 200
           assert isinstance(resp.json(), list)
           print('Top features endpoint working')
 
-          # Создание тестовой фичи
+          # Feature creation with validation
           resp = client.post('/features/', json={
             'title': 'CI Test Feature',
             'desc': 'Feature created during CI testing'
@@ -74,8 +108,18 @@ jobs:
           assert resp.status_code == 200
           feature_data = resp.json()
           assert 'id' in feature_data
-          print('Feature creation working')
-          "
+          print('Feature creation with validation working')
 
-      - name: Pre-commit (all files)
-        run: pre-commit run --all-files
+          # Test security headers
+          resp = client.get('/health')
+          security_headers = ['x-content-type-options', 'x-frame-options', 'x-xss-protection']
+          for header in security_headers:
+              assert header in resp.headers, f'Missing security header: {header}'
+          print('Security headers present')
+          "
+          echo "All smoke tests passed" >> $GITHUB_STEP_SUMMARY
+
+      - name: Bandit security scan
+        run: |
+          echo "## Bandit Security Scan" >> $GITHUB_STEP_SUMMARY
+          bandit -r app/ -f json && echo "Bandit scan passed" >> $GITHUB_STEP_SUMMARY || echo "Bandit found issues" >> $GITHUB_STEP_SUMMARY

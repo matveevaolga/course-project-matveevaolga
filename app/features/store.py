@@ -1,8 +1,8 @@
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 
 class FeatureStore:
-    def __init__(self):
+    def __init__(self) -> None:
         self.features: Dict[int, dict] = {}
         self.votes: Dict[int, dict] = {}
         self.feature_votes: Dict[int, List[int]] = {}
@@ -10,10 +10,10 @@ class FeatureStore:
         self._feat_cnt = 1
         self._vote_cnt = 1
 
-    def get_all(self) -> list:
+    def get_all(self) -> List[dict]:
         return list(self.features.values())
 
-    def get_by_id(self, feat_id: int) -> dict:
+    def get_by_id(self, feat_id: int) -> Optional[dict]:
         return self.features.get(feat_id)
 
     def create_feat(self, title: str, desc: str) -> dict:
@@ -27,7 +27,7 @@ class FeatureStore:
         self._feat_cnt += 1
         return self.features[feat_id]
 
-    def update_feat(self, feat_id: int, title: str, desc: str) -> dict:
+    def update_feat(self, feat_id: int, title: str, desc: str) -> Optional[dict]:
         if feat_id in self.features:
             self.features[feat_id]["title"] = title
             self.features[feat_id]["desc"] = desc
@@ -63,7 +63,7 @@ class FeatureStore:
         self._vote_cnt += 1
         return self.votes[vote_id]
 
-    def get_top(self) -> list:
+    def get_top(self) -> List[dict]:
         feats = list(self.features.values())
         return sorted(feats, key=lambda x: x["votes_count"], reverse=True)
 

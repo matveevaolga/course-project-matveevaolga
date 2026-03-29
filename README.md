@@ -38,6 +38,24 @@ docker run --rm -p 8000:8000 feature-votes
 docker compose up --build
 ```
 
+### Безопасность
+- Read-only файловая система
+- Health checks
+- Security hardening (no-new-privileges)
+- Multi-stage build для минимального размера образа
+- Запуск под non-root пользователем
+
+### Запуск
+```bash
+# Базовый запуск
+docker compose up --build
+
+# Полный стек (БД + Redis)
+docker compose --profile full up --build
+
+# Проверка здоровья
+curl http://localhost:8000/health
+
 ## Эндпойнты
 ### default
 - `GET /health` → `{"status": "ok"}`
@@ -87,3 +105,86 @@ curl -X POST "http://localhost:8000/features/1/vote" \
 ```
 
 См. также: `SECURITY.md`, `.pre-commit-config.yaml`, `.github/workflows/ci.yml`.
+
+## DAST Security Scanning (P11)
+
+### ZAP Integration
+Проект интегрирован с OWASP ZAP для динамического тестирования безопасности:
+
+- **Workflow**: `.github/workflows/ci-p11-dast.yml`
+- **Триггеры**: ручной запуск, push в ветку P11, PR в main
+- **Конфигурация**: адаптирована под FastAPI (отключены нерелевантные проверки)
+- **Артефакты**: HTML и JSON отчёты сохраняются в `EVIDENCE/P11/`
+
+### Запуск сканирования
+Ручной запуск через GitHub Actions UI или создание PR в main.
+
+## Интерпретация результатов:
+
+### Отчёты содержат:
+Уровень риска (High/Medium/Low/Informational)
+
+Описание уязвимостей
+
+Рекомендации по исправлению
+
+### Критерии приёма рисков:
+
+High/Medium риски - требуют немедленного исправления
+
+Low риски - исправляются в течение спринта
+
+Informational - принимаются с обоснованием
+
+## DAST Security Scanning
+
+Проект интегрирован с OWASP ZAP для автоматического тестирования безопасности:
+
+### Конфигурация
+- **Workflow**: `.github/workflows/ci-p11-dast.yml`
+- **Триггеры**: 
+  - Ручной запуск (`workflow_dispatch`)
+  - Push в ветку `P11/*`
+  - Pull Request в `main`
+- **Адаптация**: Отключены 80+ нерелевантных проверок для API
+- **Артефакты**: HTML/JSON отчеты в `EVIDENCE/P11/`
+
+### Процесс работы
+1. **Сканирование**: ZAP тестирует поднятое в Docker Compose приложение
+2. **Анализ**: Результаты автоматически анализируются в PR
+3. **Действия**:
+   - High/Medium риски требуют немедленного исправления
+   - Low риски исправляются в течение спринта  
+   - Informational - принимаются с обоснованием
+4. **Документирование**: Все решения фиксируются в `P11_ANALYSIS.md`
+
+### Пример использования
+```bash
+
+# Просмотр отчета после сканирования
+open EVIDENCE/P11/zap_baseline.html
+
+# Проверка конкретного алерта
+grep -A5 -B5 "Missing Anti-clickjacking" EVIDENCE/P11/zap_baseline.json
+
+## Security Scanning
+
+This project uses multiple security scanners:
+
+### Static Analysis
+- Hadolint: Dockerfile linting
+- Checkov: Infrastructure as Code scanning
+- Trivy: Container vulnerability scanning
+
+### Reports
+Security reports are available in EVIDENCE/P12/:
+- hadolint_report.json - Dockerfile best practices
+- checkov_report.json - IaC security checks  
+- trivy_report.json - Container vulnerabilities
+
+### Hardening Measures
+- Non-root container execution
+- Resource limits
+- Read-only filesystem
+- Network isolation
+- Regular security updates
